@@ -31,10 +31,12 @@ mamba activate cut_tag
 
 ## Build the bowtie2 reference genome index if needed:
 ## bowtie2-build AmbMex60DD_axolotl_ncbi_dataset/data/GCA_002915635.3/GCA_002915635.3_AmbMex60DD_genomic.fna AmbMex60DD_axolotl_ncbi_dataset/data/GCA_002915635.3/bowtie2_index/AmbMex60DD
+## for axolotl-omics genome:
+## nohup bowtie2-build ${projPath}/AmexG_v6.0-DD_axolotl-omics_dataset/AmexG_v6.0-DD.fa ${projPath}/AmexG_v6.0-DD_axolotl-omics_dataset/bowtie2_index/AmexG_v6.0-DD &
 
 # run bowtie2
 cores=8
-ref=${projPath}/AmbMex60DD_axolotl_ncbi_dataset/data/GCA_002915635.3/bowtie2_index/AmbMex60DD
+ref=${projPath}/AmexG_v6.0-DD_axolotl-omics_dataset/bowtie2_index/AmexG_v6.0-DD
 
 mkdir -p ${projPath}/alignment/sam/bowtie2_summary
 mkdir -p ${projPath}/alignment/bam
@@ -45,15 +47,16 @@ mkdir -p ${projPath}/alignment/bedgraph
 # However, for users performing longer sequencing, reads will need to be trimmed by Cutadapt and mapped by:
 #  --local --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 to ignore any remaining adapter sequence at the 3’ ends of reads during mapping.
 
+# align to axolotl genome
 histName="H3K27me3"
 
-bowtie2 --local --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 -p ${cores} -x ${ref} -1 ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz \
--2 ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed.fastq.gz -S ${projPath}/alignment/sam/${histName}_bowtie2.sam &> ${projPath}/alignment/sam/bowtie2_summary/${histName}_bowtie2.txt
+nohup bowtie2 --local --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 -p ${cores} -x ${ref} -1 ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz \
+-2 ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed.fastq.gz -S ${projPath}/alignment/sam/${histName}_bowtie2.sam &> ${projPath}/alignment/sam/bowtie2_summary/${histName}_bowtie2.txt & > ${histName}.out
 
 histName="H3K36me3"
 
-bowtie2 --local --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 -p ${cores} -x ${ref} -1 ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz \
--2 ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz -S ${projPath}/alignment/sam/${histName}_bowtie2.sam &> ${projPath}/alignment/sam/bowtie2_summary/${histName}_bowtie2.txt
+nohup bowtie2 --local --very-sensitive --no-mixed --no-discordant --phred33 -I 10 -X 700 -p ${cores} -x ${ref} -1 ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz \
+-2 ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz -S ${projPath}/alignment/sam/${histName}_bowtie2.sam &> ${projPath}/alignment/sam/bowtie2_summary/${histName}_bowtie2.txt & > ${histName}.out
 
 # align to the spike-in genome
 # build ecoli refeernce
@@ -128,20 +131,28 @@ samtools view -h -q $minQualityScore ${projPath}/alignment/sam/${histName}_bowti
 
 histName="H3K27me3"
 ## Filter and keep the mapped read pairs
-samtools view -bS -F 0x04 $projPath/alignment/sam/${histName}_bowtie2.qualityScore$minQualityScore.sam >$projPath/alignment/bam/${histName}_bowtie2.mapped.bam
+samtools view -bS -F 0x04 $projPath/alignment/sam/${histName}_bowtie2.qualityScore$minQualityScore.sam \
+>$projPath/alignment/bam/${histName}_bowtie2.mapped.bam
 ## Convert into bed file format
-bedtools bamtobed -i $projPath/alignment/bam/${histName}_bowtie2.mapped.bam -bedpe >$projPath/alignment/bed/${histName}_bowtie2.bed
+bedtools bamtobed -i $projPath/alignment/bam/${histName}_bowtie2.mapped.bam -bedpe \
+>$projPath/alignment/bed/${histName}_bowtie2.bed
 ## Keep the read pairs that are on the same chromosome and fragment length less than 1000bp.
-awk '$1==$4 && $6-$2 < 1000 {print $0}' $projPath/alignment/bed/${histName}_bowtie2.bed >$projPath/alignment/bed/${histName}_bowtie2.clean.bed
+awk '$1==$4 && $6-$2 < 1000 {print $0}' $projPath/alignment/bed/${histName}_bowtie2.bed \
+>$projPath/alignment/bed/${histName}_bowtie2.clean.bed
 ## Only extract the fragment related columns
-cut -f 1,2,6 $projPath/alignment/bed/${histName}_bowtie2.clean.bed | sort -k1,1 -k2,2n -k3,3n  >$projPath/alignment/bed/${histName}_bowtie2.fragments.bed
+cut -f 1,2,6 $projPath/alignment/bed/${histName}_bowtie2.clean.bed | sort -k1,1 -k2,2n -k3,3n  \
+>$projPath/alignment/bed/${histName}_bowtie2.fragments.bed
 
 # next histone mark
 histName="H3K36me3"
-samtools view -bS -F 0x04 $projPath/alignment/sam/${histName}_bowtie2.qualityScore$minQualityScore.sam >$projPath/alignment/bam/${histName}_bowtie2.mapped.bam
-bedtools bamtobed -i $projPath/alignment/bam/${histName}_bowtie2.mapped.bam -bedpe >$projPath/alignment/bed/${histName}_bowtie2.bed
-awk '$1==$4 && $6-$2 < 1000 {print $0}' $projPath/alignment/bed/${histName}_bowtie2.bed >$projPath/alignment/bed/${histName}_bowtie2.clean.bed
-cut -f 1,2,6 $projPath/alignment/bed/${histName}_bowtie2.clean.bed | sort -k1,1 -k2,2n -k3,3n  >$projPath/alignment/bed/${histName}_bowtie2.fragments.bed
+samtools view -bS -F 0x04 $projPath/alignment/sam/${histName}_bowtie2.qualityScore$minQualityScore.sam \
+>$projPath/alignment/bam/${histName}_bowtie2.mapped.bam
+bedtools bamtobed -i $projPath/alignment/bam/${histName}_bowtie2.mapped.bam -bedpe \
+>$projPath/alignment/bed/${histName}_bowtie2.bed
+awk '$1==$4 && $6-$2 < 1000 {print $0}' $projPath/alignment/bed/${histName}_bowtie2.bed \
+>$projPath/alignment/bed/${histName}_bowtie2.clean.bed
+cut -f 1,2,6 $projPath/alignment/bed/${histName}_bowtie2.clean.bed | sort -k1,1 -k2,2n -k3,3n  \
+>$projPath/alignment/bed/${histName}_bowtie2.fragments.bed
 
 # Assess replicate reproducibility
 ## We use the mid point of each fragment to infer which 500bp bins does this fragment belong to.
@@ -165,8 +176,14 @@ awk -v OFS="\t" '{print $2, $3, $1}' |  sort -k1,1V -k2,2n  >$projPath/alignment
 # Normalized coverage = (primary_genome_coverage) * S
 # The Constant is an arbitrary multiplier, typically 10,000. The resulting file will be comparatively small as a genomic coverage bedgraph file.
 
-chromSize=${projPath}/AmbMex60DD_axolotl_ncbi_dataset/data/chromSize_axl_input.txt
+# to get chromosome size:
+samtools faidx AmexG_v6.0-DD.fa
+cut -f1,2 AmexG_v6.0-DD.fa.fai > chromSize_axl.txt
+
+chromSize=${projPath}/AmexG_v6.0-DD_axolotl-omics_dataset/chromSize_axl.txt
 histName="H3K27me3"
+
+# assess via spike-in
 seqDepth=`cat $projPath/alignment/sam/bowtie2_summary/${histName}_bowtie2_spikeIn.seqDepth`
 if [[ "$seqDepth" -gt "1" ]]; then
     
@@ -210,13 +227,105 @@ mkdir -p $projPath/peakCalling/SEACR
 
 # because we don't have a control file, just select top 1% of regions by AUC
 histName="H3K27me3"
-$seacr $projPath/alignment/bedgraph/${histName}_bowtie2.fragments.normalized.bedgraph 0.01 non stringent $projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks
+$seacr $projPath/alignment/bedgraph/${histName}_bowtie2.fragments.normalized.bedgraph 0.01 non stringent \
+$projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks
 histName="H3K36me3"
-$seacr $projPath/alignment/bedgraph/${histName}_bowtie2.fragments.normalized.bedgraph 0.01 non stringent $projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks
+$seacr $projPath/alignment/bedgraph/${histName}_bowtie2.fragments.normalized.bedgraph 0.01 non stringent \
+$projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks
 
 # peak summary
 # peak_sum.rmd
 
-# visualize peaks in genome browser: https://igv.org/app/
+# visualize peaks in genome browser: 
+# axolotl: https://genome.axolotl-omics.org/
+# human/mouse etc: https://igv.org/app/
 
 # for deeptools part, need annotation file
+
+# make bigwig files normalized to genome
+mkdir -p $projPath/alignment/bigwig
+histName="H3K27me3" 
+# sort                                                                                                                                       
+samtools sort -o $projPath/alignment/bam/${histName}.sorted.bam \
+$projPath/alignment/bam/${histName}_bowtie2.mapped.bam  
+# index, -c for csi for genomes with chromosomes longer than 512Mb                                                   
+samtools index -c $projPath/alignment/bam/${histName}.sorted.bam
+# convert to bw and normalize                                                                                                              
+bamCoverage -b $projPath/alignment/bam/${histName}.sorted.bam \
+-o $projPath/alignment/bigwig/${histName}_norm.smooth.bw  --normalizeUsing CPM \
+--binSize 500 --smoothLength 2000 --minMappingQuality 1 --numberOfProcessors $cores
+# no smoothing
+bamCoverage -b $projPath/alignment/bam/${histName}.sorted.bam \
+-o $projPath/alignment/bigwig/${histName}_norm.bw  --normalizeUsing CPM \
+--minMappingQuality 1 --numberOfProcessors $cores
+
+# next mark
+histName="H3K36me3"
+# sort                                                                                                                                       
+samtools sort -o $projPath/alignment/bam/${histName}.sorted.bam \
+$projPath/alignment/bam/${histName}_bowtie2.mapped.bam  
+# index, -c for csi for genomes with chromosomes longer than 512Mb                                                   
+samtools index -c $projPath/alignment/bam/${histName}.sorted.bam
+# convert to bw and normalize                                                                                                              
+bamCoverage -b $projPath/alignment/bam/${histName}.sorted.bam \
+-o $projPath/alignment/bigwig/${histName}_norm.smooth.bw  --normalizeUsing CPM \
+--binSize 500 --smoothLength 2000 --minMappingQuality 1 --numberOfProcessors $cores
+# no smoothing
+bamCoverage -b $projPath/alignment/bam/${histName}.sorted.bam \
+-o $projPath/alignment/bigwig/${histName}_norm.bw  --normalizeUsing CPM \
+--minMappingQuality 1 --numberOfProcessors $cores
+# no smoothing
+bamCoverage -b $projPath/alignment/bam/${histName}.sorted.bam \
+-o $projPath/alignment/bigwig/${histName}_norm.bw  --normalizeUsing CPM \
+--minMappingQuality 1 --numberOfProcessors $cores
+
+# use deeptools to compute matrix
+cores=16
+computeMatrix scale-regions -S $projPath/alignment/bigwig/H3K27me3_norm.bw \
+                               $projPath/alignment/bigwig/H3K36me3_norm.bw \
+                              -R $projPath/AmexG_v6.0-DD_axolotl-omics_dataset/AmexT_v47-AmexG_v6.0-DD.gtf \
+                              --beforeRegionStartLength 3000 \
+                              --regionBodyLength 5000 \
+                              --afterRegionStartLength 3000 \
+                              --skipZeros -o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene_cpm_notsmooth.mat.gz \
+                              -p $cores
+
+# heat map on genes
+# in plotting we normalize by mean of genome
+stat=mean
+plotHeatmap -m $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene_cpm_notsmooth.mat.gz \
+-o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene_cpm-notsmooth.pdf --averageTypeSummaryPlot $stat \
+--sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions \
+$projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene.histone.cpm.notsmooth.bed
+
+# Heatmap on CUT&Tag peaks
+histName="H3K27me3"
+# get summit region
+awk '{split($6, summit, ":"); split(summit[2], region, "-"); print summit[1]"\t"region[1]"\t"region[2]}' \
+$projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks.stringent.bed >\
+$projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks.summitRegion.bed
+# compute matrix
+computeMatrix reference-point -S $projPath/alignment/bigwig/${histName}_norm.bw \
+              -R $projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks.summitRegion.bed \
+              --skipZeros -o $projPath/peakCalling/SEACR/${histName}_SEACR.mat.gz -p $cores -a 3000 -b 3000 \
+              --referencePoint center
+
+plotHeatmap -m $projPath/peakCalling/SEACR/${histName}_SEACR.mat.gz -out $projPath/peakCalling/SEACR/${histName}_SEACR_heatmap.pdf \
+            --sortUsing sum --startLabel "Peak Start" --endLabel "Peak End" --xAxisLabel "" --regionsLabel "Peaks" --samplesLabel \
+            "${histName}" --averageTypeSummaryPlot $stat 
+
+# next mark
+histName="H3K36me3"
+
+awk '{split($6, summit, ":"); split(summit[2], region, "-"); print summit[1]"\t"region[1]"\t"region[2]}' \
+$projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks.stringent.bed >\
+$projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks.summitRegion.bed
+# compute matrix
+computeMatrix reference-point -S $projPath/alignment/bigwig/${histName}_norm.bw \
+              -R $projPath/peakCalling/SEACR/${histName}_seacr_top0.01.peaks.summitRegion.bed \
+              --skipZeros -o $projPath/peakCalling/SEACR/${histName}_SEACR.mat.gz -p $cores -a 3000 -b 3000 \
+              --referencePoint center
+
+plotHeatmap -m $projPath/peakCalling/SEACR/${histName}_SEACR.mat.gz -out $projPath/peakCalling/SEACR/${histName}_SEACR_heatmap.pdf \
+            --sortUsing sum --startLabel "Peak Start" --endLabel "Peak End" --xAxisLabel "" --regionsLabel "Peaks" --samplesLabel \
+            "${histName}" --averageTypeSummaryPlot $stat 
