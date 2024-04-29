@@ -1,4 +1,17 @@
 # following cut and tag tutorial: https://yezhengstat.github.io/CUTTag_tutorial/
+# make conda/mamba environment
+# get bowtie2 via mamba
+# mamba create --name cut_tag bowtie2
+# mamba activate cut_tag
+# conda install bioconda::fastqc
+# mamba install fastp
+# conda install bioconda::bedtools
+# conda install bioconda::samtools
+# conda install bioconda::seacr
+# conda install bioconda::deeptools
+
+mamba activate cut_tag
+
 # set project path directory
 projPath="/w5home/bmoore/cut_and_tag"
 
@@ -7,27 +20,25 @@ mkdir -p ${projPath}/fastqFileQC/H3K27me3
 mkdir -p ${projPath}/fastqFileQC/H3K36me3
 
 # QC fastqs
-../programs/FastQC/fastqc -o ${projPath}/fastqFileQC/H3K27me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001.fastq.gz
-../programs/FastQC/fastqc -o ${projPath}/fastqFileQC/H3K27me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001.fastq.gz
-../programs/FastQC/fastqc -o ${projPath}/fastqFileQC/H3K36me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001.fastq.gz
-../programs/FastQC/fastqc -o ${projPath}/fastqFileQC/H3K36me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001.fastq.gz
+fastqc -o ${projPath}/fastqFileQC/H3K27me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001.fastq.gz
+fastqc -o ${projPath}/fastqFileQC/H3K27me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001.fastq.gz
+fastqc -o ${projPath}/fastqFileQC/H3K36me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001.fastq.gz
+fastqc -o ${projPath}/fastqFileQC/H3K36me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001.fastq.gz
 
 # Trim fastqs with fastp
 # get fastp:
-wget http://opengene.org/fastp/fastp
-chmod a+x ./fastp
+#wget http://opengene.org/fastp/fastp
+#chmod a+x ./fastp
 
-../programs/fastp -i fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001.fastq.gz -I fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001.fastq.gz -o \
+fastp -i fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001.fastq.gz -I fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001.fastq.gz -o \
 fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz -O fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed.fastq.gz
-../programs/fastp -i fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001.fastq.gz -I fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001.fastq.gz -o \
+fastp -i fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001.fastq.gz -I fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001.fastq.gz -o \
 fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz -O fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz
 
 # QC trimmed file again
-../programs/FastQC/fastqc -o ${projPath}/fastqFileQC/H3K27me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz
-../programs/FastQC/fastqc -o ${projPath}/fastqFileQC/H3K36me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz
-# get bowtie2 via mamba
-mamba create --name cut_tag bowtie2
-mamba activate cut_tag
+fastqc -o ${projPath}/fastqFileQC/H3K27me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz
+astqc -o ${projPath}/fastqFileQC/H3K36me3 -f fastq ${projPath}/fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz
+
 
 ## Build the bowtie2 reference genome index if needed:
 ## bowtie2-build AmbMex60DD_axolotl_ncbi_dataset/data/GCA_002915635.3/GCA_002915635.3_AmbMex60DD_genomic.fna AmbMex60DD_axolotl_ncbi_dataset/data/GCA_002915635.3/bowtie2_index/AmbMex60DD
@@ -177,8 +188,8 @@ awk -v OFS="\t" '{print $2, $3, $1}' |  sort -k1,1V -k2,2n  >$projPath/alignment
 # The Constant is an arbitrary multiplier, typically 10,000. The resulting file will be comparatively small as a genomic coverage bedgraph file.
 
 # to get chromosome size:
-samtools faidx AmexG_v6.0-DD.fa
-cut -f1,2 AmexG_v6.0-DD.fa.fai > chromSize_axl.txt
+samtools faidx $projPath/AmexG_v6.0-DD_axolotl-omics_dataset/AmexG_v6.0-DD.fa
+cut -f1,2 $projPath/AmexG_v6.0-DD_axolotl-omics_dataset/AmexG_v6.0-DD.fa.fai > chromSize_axl.txt
 
 chromSize=${projPath}/AmexG_v6.0-DD_axolotl-omics_dataset/chromSize_axl.txt
 histName="H3K27me3"
@@ -281,22 +292,28 @@ bamCoverage -b $projPath/alignment/bam/${histName}.sorted.bam \
 
 # use deeptools to compute matrix
 cores=16
-computeMatrix scale-regions -S $projPath/alignment/bigwig/H3K27me3_norm.bw \
-                               $projPath/alignment/bigwig/H3K36me3_norm.bw \
+computeMatrix scale-regions -S $projPath/alignment/bigwig/H3K36me3_norm.smooth.bw \
+                               $projPath/alignment/bigwig/H3K27me3_norm.smooth.bw \
                               -R $projPath/AmexG_v6.0-DD_axolotl-omics_dataset/AmexT_v47-AmexG_v6.0-DD.gtf \
-                              --beforeRegionStartLength 3000 \
+                              --beforeRegionStartLength 5000 \
                               --regionBodyLength 5000 \
-                              --afterRegionStartLength 3000 \
-                              --skipZeros -o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene_cpm_notsmooth.mat.gz \
+                              --afterRegionStartLength 10000 \
+                              --skipZeros -o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K36me3-H3K27me3_gene_cpm_smooth10k.mat.gz \
                               -p $cores
 
 # heat map on genes
-# in plotting we normalize by mean of genome
 stat=mean
-plotHeatmap -m $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene_cpm_notsmooth.mat.gz \
--o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene_cpm-notsmooth.pdf --averageTypeSummaryPlot $stat \
+plotHeatmap -m $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene_cpm_smooth10k.mat.gz \
+-o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene_cpm-smooth10k.pdf --averageTypeSummaryPlot $stat \
 --sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions \
-$projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene.histone.cpm.notsmooth.bed
+$projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K27me3-H3K36me3_gene.histone.cpm.smooth10k.bed
+
+# sort by sample H3K36me3
+stat=mean
+plotHeatmap -m $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K36me3-H3K27me3_gene_cpm_smooth10k.mat.gz \
+-o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K36me3-H3K27me3_gene_cpm-smooth10k.pdf --averageTypeSummaryPlot $stat \
+--sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions \
+$projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_H3K36me3-H3K27me3_gene.histone.cpm.smooth10k.bed
 
 # Heatmap on CUT&Tag peaks
 histName="H3K27me3"
