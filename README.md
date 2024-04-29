@@ -22,16 +22,18 @@ cut -f1,2 "path to genome fai file that was just created" > chromSize.txt
 ```
 ## Set variables in cut_tag.sh script
 ```
-projPath= "directory where data will be processes"
-fastq_PE1= "where fastq read 1 is located relative to projPath"
-fastq_PE2= "where fastq read 2 is located relative to projPath"
-histName1= "name of histone mark analyzing"
-histName2= "second histone mark (if needed)"
-ref= "path to bowtie2 index"
-spikeInRef= "path to spike-in reference (ie. E-coli)
+projPath="directory where data will be processes"
+fastq_PE1="where fastq read 1 is located relative to projPath"
+fastq_PE2="where fastq read 2 is located relative to projPath"
+histName1="name of histone mark analyzing"
+histName2="second histone mark (if needed)"
+ref="path to bowtie2 index"
+spikeInRef="path to spike-in reference (ie. E-coli)
 binLen=500 # length of window for fragments
 cores=16 # number of cpus
-chromSize= "path to chromSize.txt file"
+chromSize="path to chromSize.txt file"
+seacr="path to SEACR .sh file"
+minQualityScore=2 # minimum quality score for filtering reads
 ```
 
 ## Running cut and tag
