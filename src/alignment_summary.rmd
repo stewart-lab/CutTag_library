@@ -27,7 +27,7 @@ library(viridis)
 library(ggpubr)
 library(corrplot)
 projPath = "/w5home/bmoore/cut_and_tag"
-sampleList = c("H3K27me3", "H3K36me3")
+sampleList = c("H3K27me3_25", "H3K36me3_25")
 histList = c("H3K27me3", "H3K36me3")
 setwd(projPath)
 ```
@@ -35,9 +35,10 @@ setwd(projPath)
 ## Collect the alignment results from the bowtie2 alignment summary files
 alignResult = c()
 for(hist in sampleList){
-  alignRes = read.table(paste0(projPath, "/alignment/sam/bowtie2_summary/", hist, "_bowtie2.txt"), header = FALSE, fill = TRUE)
+  alignRes = read.table(paste0(projPath, "/alignment_25/sam/bowtie2_summary/", hist, "_bowtie2.txt"), header = FALSE, fill = TRUE)
   alignRate = substr(alignRes$V1[6], 1, nchar(as.character(alignRes$V1[6]))-1)
   histInfo = strsplit(hist, "_")[[1]]
+  print(histInfo)
   alignResult = data.frame(Histone = histInfo[1], Replicate = histInfo[2], 
                            SequencingDepth = alignRes$V1[1] %>% as.character %>% as.numeric, 
                            MappedFragNum_axl = alignRes$V1[4] %>% as.character %>% as.numeric + alignRes$V1[5] %>% as.character %>% as.numeric, 
@@ -50,7 +51,7 @@ alignResult %>% mutate(AlignmentRate_axl = paste0(AlignmentRate_axl, "%"))
 ```{r spikein}
 spikeAlign = c()
 for(hist in sampleList){
-  spikeRes = read.table(paste0(projPath, "/alignment/sam/bowtie2_summary/", hist, "_bowtie2_spikeIn.txt"), header = FALSE, fill = TRUE)
+  spikeRes = read.table(paste0(projPath, "/alignment_25/sam/bowtie2_summary/", hist, "_bowtie2_spikeIn.txt"), header = FALSE, fill = TRUE)
   alignRate = substr(spikeRes$V1[6], 1, nchar(as.character(spikeRes$V1[6]))-1)
   histInfo = strsplit(hist, "_")[[1]]
   spikeAlign = data.frame(Histone = histInfo[1], Replicate = histInfo[2], 

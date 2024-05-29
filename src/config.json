@@ -1,0 +1,13 @@
+{
+    "title": "sample subset 0.10",
+    "projPath": "/w5home/bmoore/cut_and_tag",
+    "fastq_PE1": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed_sub10.fastq",
+    "fastq_PE2": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed_sub10.fastq",
+    "histName1": "H3K27me3",
+    "histName2": "H3K36me3",
+    "runfastp": "false",
+    "ref": "/AmexG_v6.0-DD_axolotl-omics_dataset/bowtie2_index/AmexG_v6.0-DD",
+    "spikeInRef": "/ASM584v2_ecoli_ncbi_dataset/data/GCF_000005845.2/bowtie2Index/Ecoli",
+    "spikein": "true",
+    "cores": "8"
+}

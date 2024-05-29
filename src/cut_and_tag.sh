@@ -57,7 +57,7 @@ fastp -i ${fastq_PE3} -I ${fastq_PE4} \
 
 # QC trimmed file again
 fastqc -o ${projPath}/fastqFileQC/${histName1} -f fastq ${projPath}/${filename1}_trimmed.fastq.gz
-astqc -o ${projPath}/fastqFileQC/${histName2} -f fastq ${projPath}/${filename3}_trimmed.fastq.gz
+fastqc -o ${projPath}/fastqFileQC/${histName2} -f fastq ${projPath}/${filename3}_trimmed.fastq.gz
 
 
 ## Build the bowtie2 reference genome index if needed:
@@ -98,7 +98,6 @@ seqDepth1=$((seqDepthDouble/2))
 echo $seqDepth1 >$projPath/alignment/sam/bowtie2_summary/${histName1}_bowtie2_spikeIn.seqDepth
 
 #next histone
-histName="H3K36me3"
 
 bowtie2 --end-to-end --very-sensitive --no-overlap --no-dovetail --no-mixed --no-discordant --phred33 -I 10 -X 700 -p ${cores} -x ${spikeInRef} \
 -1 ${projPath}/${filename3}_trimmed.fastq.gz -2 ${projPath}/${filename4}_trimmed.fastq.gz \
@@ -309,13 +308,38 @@ computeMatrix scale-regions -S $projPath/alignment/bigwig/${histName1}_norm.smoo
                               --afterRegionStartLength 10000 \
                               --skipZeros -o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName1}-${histName2}_gene_cpm_smooth10k.mat.gz \
                               -p $cores
-
+# on individual marks
+computeMatrix scale-regions -S $projPath/alignment/bigwig/${histName1}_norm.smooth.bw \
+                              -R $projPath/AmexG_v6.0-DD_axolotl-omics_dataset/AmexT_v47-AmexG_v6.0-DD.gtf \
+                              --beforeRegionStartLength 5000 \
+                              --regionBodyLength 5000 \
+                              --afterRegionStartLength 10000 \
+                              --skipZeros -o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName1}_gene_cpm_smooth10k.mat.gz \
+                              -p $cores
+computeMatrix scale-regions -S $projPath/alignment/bigwig/${histName2}_norm.smooth.bw \
+                                -R $projPath/AmexG_v6.0-DD_axolotl-omics_dataset/AmexT_v47-AmexG_v6.0-DD.gtf \
+                                --beforeRegionStartLength 5000 \
+                                --regionBodyLength 5000 \
+                                --afterRegionStartLength 10000 \
+                                --skipZeros -o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName2}_gene_cpm_smooth10k.mat.gz \
+                                -p $cores
 # heat map on genes
 stat=mean
 plotHeatmap -m $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName1}-${histName2}_gene_cpm_smooth10k.mat.gz \
 -o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName1}-${histName2}_gene_cpm-smooth10k.pdf --averageTypeSummaryPlot $stat \
 --sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions \
 $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName1}-${histName2}_gene.histone.cpm.smooth10k.bed
+
+# on individual marks
+plotHeatmap -m $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName1}_gene_cpm_smooth10k.mat.gz \
+-o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName1}_gene_cpm-smooth10k.pdf --averageTypeSummaryPlot $stat \
+--sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions \
+$projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName1}_gene.histone.cpm.smooth10k.bed
+
+plotHeatmap -m $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName2}_gene_cpm_smooth10k.mat.gz \
+-o $projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName2}_gene_cpm-smooth10k.pdf --averageTypeSummaryPlot $stat \
+--sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions \
+$projPath/output_plots/AmexT_v47-AmexG_v6.0-DD_${histName2}_gene.histone.cpm.smooth10k.bed
 
 # Heatmap on CUT&Tag peaks
 # get summit region

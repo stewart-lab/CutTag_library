@@ -24,7 +24,7 @@ library(viridis)
 library(ggpubr)
 library(corrplot)
 projPath = "/w5home/bmoore/cut_and_tag"
-sampleList = c("H3K27me3", "H3K36me3")
+sampleList = c("H3K27me3_25", "H3K36me3_25")
 histList = c("H3K27me3", "H3K36me3")
 setwd(projPath)
 ```
@@ -35,7 +35,7 @@ fragLen = c()
 for(hist in sampleList){
   
   histInfo = strsplit(hist, "_")[[1]]
-  fragLen = read.table(paste0(projPath, "/alignment/sam/fragmentLen/", hist, "_fragmentLen.txt"), header = FALSE) %>% 
+  fragLen = read.table(paste0(projPath, "/alignment_25/sam/fragmentLen/", hist, "_fragmentLen.txt"), header = FALSE) %>% 
   mutate(fragLen = V1 %>% as.numeric, fragCount = V2 %>% as.numeric, Weight = as.numeric(V2)/sum(as.numeric(V2)), Histone = histInfo[1], 
   Replicate = histInfo[2], sampleInfo = hist) %>% rbind(fragLen, .) 
 }
