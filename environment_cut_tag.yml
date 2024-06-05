@@ -146,7 +146,7 @@ dependencies:
   - oniguruma=6.9.9=hd590300_0
   - openjdk=20.0.2=hfea2f88_1
   - openjpeg=2.5.2=h488ebb8_0
-  - openssl=3.2.1=hd590300_1
+  - openssl=3.3.0=h4ab18f5_3
   - packaging=24.0=pyhd8ed1ab_0
   - pandoc=3.1.12.3=ha770c72_0
   - pango=1.50.14=ha41ecd1_2
@@ -374,4 +374,6 @@ dependencies:
   - zipp=3.17.0=pyhd8ed1ab_0
   - zlib=1.2.13=hd590300_5
   - zstd=1.5.5=hfc55251_0
+  - pip:
+      - cmdlogtime==0.0.4
 prefix: /w5home/bmoore/miniconda3/envs/cut_tag
