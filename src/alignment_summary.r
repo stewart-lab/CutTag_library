@@ -43,7 +43,8 @@ for (sample_name in names(samples)) {
   histList = c(histList, sample$histName)
   cat(paste("  Replicate:", sample$rep, "\n\n"))
   alignRes = read.table(paste0(projPath, "/alignment/sam/bowtie2_summary/", 
-            sample$histName, "_rep", as.character(sample$rep),"_bowtie2.txt"), header = FALSE, fill = TRUE)
+            sample$histName, "_rep", as.character(sample$rep),"_bowtie2.txt"), 
+            skip=1, header = FALSE, fill = TRUE) # skip 1 to skip no hup line
   alignRate = substr(alignRes$V1[6], 1, nchar(as.character(alignRes$V1[6]))-1)
   alignResult = data.frame(Histone = sample$histName, Replicate = sample$rep, 
                   SequencingDepth = alignRes$V1[1] %>% as.character %>% as.numeric, 
@@ -60,7 +61,7 @@ spikeAlign = c()
 for (sample_name in names(samples)) {
   sample <- samples[[sample_name]]
   spikeRes = read.table(paste0(projPath, "/alignment/sam/bowtie2_summary/", sample$histName, "_rep", 
-               as.character(sample$rep), "_bowtie2_spikeIn.txt"), header = FALSE, fill = TRUE)
+               as.character(sample$rep), "_bowtie2_spikeIn.txt"), skip=1, header = FALSE, fill = TRUE)
   alignRate = substr(spikeRes$V1[6], 1, nchar(as.character(spikeRes$V1[6]))-1)
   spikeAlign = data.frame(Histone = sample$histName, Replicate = sample$rep, 
                     SequencingDepth = spikeRes$V1[1] %>% as.character %>% as.numeric, 

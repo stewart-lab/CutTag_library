@@ -39,7 +39,7 @@ def main():
     print(sampleList)
     # # run alignment_summary.r for alignment visualization
     print("Running alignment_summary.r")
-    ralignsumcmd = ("Rscript "+ "--vanilla "+ script_dir+"/alignment_summary.r " + bowtie2_dir)
+    ralignsumcmd = ("Rscript --vanilla " + script_dir+"/alignment_summary.r " + bowtie2_dir)
     addl_logfile.write("\n\nR align cmd: " + ralignsumcmd + "\n")
     result = run(ralignsumcmd, check=True, capture_output=True, text=True, shell=True)
     if (result.returncode):
