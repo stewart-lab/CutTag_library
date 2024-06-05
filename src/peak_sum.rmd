@@ -1,5 +1,5 @@
 ---
-title: "Replicate correlation plot"
+title: "Peak sum plot"
 author: "Beth Moore"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
