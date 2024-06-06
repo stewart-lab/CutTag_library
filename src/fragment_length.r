@@ -17,6 +17,7 @@ library(tidyjson)
 args = commandArgs(trailingOnly=TRUE)
 
 projPath = args[1]
+outDir = args[2]
 
 # set working directory
 setwd(projPath)
@@ -75,3 +76,4 @@ pdf(file= paste0(projPath, "/alignment/sam/fragmentLen/fragment_length.pdf"), wi
 ggarrange(figA, figB, ncol = 2)
 dev.off()
 
+writeLines(capture.output(sessionInfo()), paste0(outDir,"/pkgs_log/fraglength_sessionInfo.txt"))

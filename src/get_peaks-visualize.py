@@ -39,7 +39,7 @@ def main():
     print(sampleList)
     # # run alignment_summary.r for alignment visualization
     print("Running alignment_summary.r")
-    ralignsumcmd = ("Rscript --vanilla " + script_dir+"/alignment_summary.r " + bowtie2_dir)
+    ralignsumcmd = ("Rscript --vanilla " + script_dir+"/alignment_summary.r " + bowtie2_dir + " " + out_dir)
     addl_logfile.write("\n\nR align cmd: " + ralignsumcmd + "\n")
     result = run(ralignsumcmd, check=True, capture_output=True, text=True, shell=True)
     if (result.returncode):
@@ -85,7 +85,7 @@ def main():
 
     # # run alignment_summary.r for alignment visualization
     print("Running fragment_length.r")
-    rfrsizecmd = ("Rscript --vanilla " + script_dir+"/fragment_length.r " + bowtie2_dir)
+    rfrsizecmd = ("Rscript --vanilla " + script_dir+"/fragment_length.r " + bowtie2_dir + " " + out_dir)
     addl_logfile.write("\n\nR align cmd: " + rfrsizecmd + "\n")
     result = run(rfrsizecmd, check=True, capture_output=True, text=True, shell=True)
     if (result.returncode):
@@ -202,7 +202,7 @@ def main():
         addl_logfile.write("RC:" + str(result.returncode) + "\nOUT:" + result.stdout + "\nERR:" + result.stderr)
 
     print("running scale.r")
-    rscalecmd = ("Rscript --vanilla " + script_dir + "/scale.r " + bowtie2_dir)
+    rscalecmd = ("Rscript --vanilla " + script_dir + "/scale.r " + bowtie2_dir + " " + out_dir)
     addl_logfile.write("\n\nR scale cmd: " + rscalecmd + "\n")
     result = run(rscalecmd, check=True, capture_output=True, text=True, shell=True)
     if (result.returncode):
@@ -225,7 +225,7 @@ def main():
 
     # run peak_sum.r
     print("Running peak_sum.r")
-    rpeaksumcmd = ("Rscript --vanilla " + script_dir + "/peak_sum.r " + bowtie2_dir)
+    rpeaksumcmd = ("Rscript --vanilla " + script_dir + "/peak_sum.r " + bowtie2_dir + " " + out_dir)
     addl_logfile.write("\n\nR peak sum cmd: " + rpeaksumcmd + "\n")
     result = run(rpeaksumcmd, check=True, capture_output=True, text=True, shell=True)
     if (result.returncode):
@@ -307,7 +307,7 @@ def main():
 
     # plot heatmap
     print("Plotting heatmap")
-    stat= "mean"
+    stat = "mean"
     plotHeatmapcmd = ("plotHeatmap -m " + bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + histList[0] + "-" + histList[1] + "_gene_cpm_smooth10k.mat.gz " +
                       "-o " + bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + histList[0] + "-" + histList[1] + "_gene_cpm-smooth10k.pdf " +
                       "--averageTypeSummaryPlot " + stat + " --sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions " +

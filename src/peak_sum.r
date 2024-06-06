@@ -16,6 +16,7 @@ library(chromVAR)
 args = commandArgs(trailingOnly=TRUE)
 
 projPath = args[1]
+outDir = args[2]
 
 # set working directory
 setwd(projPath)
@@ -138,3 +139,5 @@ figD = frip %>% ggplot(aes(x = Histone, y = frip, fill = Histone, label = round(
 pdf(file= paste0(projPath, "/peakCalling/peak_plots.pdf"), width=7, height=7)
 ggarrange(figA, figB, figC, figD, ncol = 2, nrow=2, common.legend = TRUE, legend="bottom")
 dev.off()
+
+writeLines(capture.output(sessionInfo()), paste0(outDir,"/pkgs_log/peaksum_sessionInfo.txt"))

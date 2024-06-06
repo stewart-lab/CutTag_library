@@ -17,6 +17,7 @@ library(tidyjson)
 args = commandArgs(trailingOnly=TRUE)
 
 projPath = args[1]
+outDir = args[2]
 
 # set working directory
 setwd(projPath)
@@ -124,3 +125,5 @@ figD = spikeAlign %>% ggplot(aes(x = Histone, y = AlignmentRate_spikeIn, fill = 
 pdf(file= paste0(projPath, "/alignment/alignment_summary.pdf"))
 ggarrange(figA, figB, figC, figD, ncol = 2, nrow=2, common.legend = TRUE, legend="bottom")
 dev.off()
+
+writeLines(capture.output(sessionInfo()), paste0(outDir,"/pkgs_log/alignsum_sessionInfo.txt"))

@@ -17,6 +17,7 @@ library(tidyjson)
 args = commandArgs(trailingOnly=TRUE)
 
 projPath = args[1]
+outDir = args[2]
 
 # set working directory
 setwd(projPath)
@@ -81,3 +82,5 @@ figB = normDepth %>% ggplot(aes(x = Histone, y = normDepth, fill = Histone)) +
 pdf(file= paste0(projPath, "/alignment/scale_boxplot.pdf"), width=7, height=7)
 ggarrange(figA, figB, ncol = 2, common.legend = TRUE, legend="bottom")
 dev.off()
+
+writeLines(capture.output(sessionInfo()), paste0(outDir,"/pkgs_log/scale_sessionInfo.txt"))
