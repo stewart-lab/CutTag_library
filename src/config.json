@@ -1,25 +1,24 @@
 {
-    "title": "sample subset 0.10",
+    "title": "histone marke sample full set",
     "projPath": "/w5home/bmoore/cut_and_tag",
     "Number_of_samples": 2,
     "SAMPLE_1": {
-        "fastq_PE1": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed_sub10.fastq",
-        "fastq_PE2": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed_sub10.fastq",
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed.fastq.gz",
         "histName": "H3K27me3",
         "rep": 1
     },
     "SAMPLE_2": {
-        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed_sub10.fastq",
-        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed_sub10.fastq",
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz",
         "histName": "H3K36me3",
         "rep": 1
     },
-    "runfastp": "true",
+    "runfastp": "false",
     "ref": "/AmexG_v6.0-DD_axolotl-omics_dataset/bowtie2_index/AmexG_v6.0-DD",
     "spikeInRef": "/ASM584v2_ecoli_ncbi_dataset/data/GCF_000005845.2/bowtie2Index/Ecoli",
     "spikeIn": "true",
     "cores": "16",
-    "bowtie2dir": "/w5home/bmoore/cut_and_tag/2024_05_31_10_44_21",
     "chromSize":"/AmexG_v6.0-DD_axolotl-omics_dataset/chromSize_axl.txt",
     "seacr":"/w5home/bmoore/miniconda3/envs/cut_tag/bin/SEACR_1.3.sh",
     "minQualityScore":2,
