@@ -57,7 +57,7 @@ python run_fastqc_bowtie2.py <your output directory>
 ### After Bowtie has finished, run the next python script to compute peaks and visualize
 ```
 # from the src folder run:
-python get_peaks-visualize.py <your bowtie2 dir from step 1> <your output dir (can be same as bowtie2 dir)>
+python get_peaks-visualize.py <your output dir (can be same as bowtie2 dir)> <your bowtie2 dir from step 1> 
 ```
 **Note** You may want to nohup this script, as this can take >10 hours to complete
 
