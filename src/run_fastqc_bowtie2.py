@@ -93,7 +93,7 @@ def main():
         for sample in samples:
             filename1 = sample["fastq_PE1"].split(".")[0]+ "_trimmed.fastq.gz"
             filename2 = sample["fastq_PE2"].split(".")[0]+ "_trimmed.fastq.gz"
-            run_fastp(out_dir, sample["histName"], sample["rep"], config["projPath"], sample["fastq_PE1"], 
+            run_fastp(out_dir, sample["histName"], str(sample["rep"]), config["projPath"], sample["fastq_PE1"], 
                       sample["fastq_PE2"], filename1, filename2, addl_logfile)
 
     else:
@@ -111,10 +111,10 @@ def main():
         for sample in samples:
             filename1 = sample["fastq_PE1"].split(".")[0]+ "_trimmed.fastq.gz"
             filename2 = sample["fastq_PE2"].split(".")[0]+ "_trimmed.fastq.gz"
-            run_bowtie2(out_dir, sample["histName"], sample["rep"], config["projPath"], config["ref"], filename1, filename2, config["cores"], addl_logfile)
+            run_bowtie2(out_dir, sample["histName"], str(sample["rep"]), config["projPath"], config["ref"], filename1, filename2, config["cores"], addl_logfile)
     else:
         for sample in samples:
-            run_bowtie2(out_dir, sample["histName"], sample["rep"], config["projPath"], config["ref"], sample["fastq_PE1"], sample["fastq_PE2"], config["cores"], addl_logfile)
+            run_bowtie2(out_dir, sample["histName"], str(sample["rep"]), config["projPath"], config["ref"], sample["fastq_PE1"], sample["fastq_PE2"], config["cores"], addl_logfile)
 
     # run bowtie2 on spikein
     if config["spikeIn"]=="true":
@@ -123,10 +123,10 @@ def main():
             for sample in samples:
                 filename1 = sample["fastq_PE1"].split(".")[0]+ "_trimmed.fastq.gz"
                 filename2 = sample["fastq_PE2"].split(".")[0]+ "_trimmed.fastq.gz"
-                run_bowtie2sp(out_dir, sample["histName"], sample["rep"], config["projPath"], config["spikeInRef"], filename1, filename2, config["cores"], addl_logfile)
+                run_bowtie2sp(out_dir, sample["histName"], str(sample["rep"]), config["projPath"], config["spikeInRef"], filename1, filename2, config["cores"], addl_logfile)
         else:
             for sample in samples:
-                run_bowtie2sp(out_dir, sample["histName"], sample["rep"], config["projPath"], config["spikeInRef"], sample["fastq_PE1"], sample["fastq_PE2"], config["cores"], addl_logfile)
+                run_bowtie2sp(out_dir, sample["histName"], str(sample["rep"]), config["projPath"], config["spikeInRef"], sample["fastq_PE1"], sample["fastq_PE2"], config["cores"], addl_logfile)
     print("Bowtie2 running, check bowtie summary files for results\n")
     # edit config file to add out_dir as bowtie2dir
     config["bowtie2dir"] = out_dir
