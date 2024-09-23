@@ -19,8 +19,12 @@ fastq_PE1="fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001.fastq.gz"
 fastq_PE2="fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001.fastq.gz"
 fastq_PE3="fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001.fastq.gz"
 fastq_PE4="fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001.fastq.gz"
-histName1="H3K27me3"
-histName2="H3K36me3"
+histName1="Brd4"
+histName2="H3K27ac"
+histName3="H3K27me3"
+histName4="H3K4me1"
+histName5="H3K4me3"
+histName6="pRBP1_CTD"
 ref=${projPath}/AmexG_v6.0-DD_axolotl-omics_dataset/bowtie2_index/AmexG_v6.0-DD
 spikeInRef=${projPath}/ASM584v2_ecoli_ncbi_dataset/data/GCF_000005845.2/bowtie2Index/Ecoli
 binLen=500 # length of window for fragments
@@ -127,10 +131,26 @@ mkdir -p $projPath/alignment/sam/fragmentLen
 samtools view -F 0x04 $projPath/alignment/sam/${histName1}_bowtie2.sam | awk -F'\t' \
 'function abs(x){return ((x < 0.0) ? -x : x)} {print abs($9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' \
 > $projPath/alignment/sam/fragmentLen/${histName1}_fragmentLen.txt
-histName="H3K36me3"
+# next mark
 samtools view -F 0x04 $projPath/alignment/sam/${histName2}_bowtie2.sam | awk -F'\t' \
 'function abs(x){return ((x < 0.0) ? -x : x)} {print abs($9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' \
 > $projPath/alignment/sam/fragmentLen/${histName2}_fragmentLen.txt
+#
+samtools view -F 0x04 $projPath/alignment/sam/${histName3}_bowtie2.sam | awk -F'\t' \
+'function abs(x){return ((x < 0.0) ? -x : x)} {print abs($9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' \
+> $projPath/alignment/sam/fragmentLen/${histName3}_fragmentLen.txt
+#
+samtools view -F 0x04 $projPath/alignment/sam/${histName4}_bowtie2.sam | awk -F'\t' \
+'function abs(x){return ((x < 0.0) ? -x : x)} {print abs($9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' \
+> $projPath/alignment/sam/fragmentLen/${histName4}_fragmentLen.txt
+#
+samtools view -F 0x04 $projPath/alignment/sam/${histName5}_bowtie2.sam | awk -F'\t' \
+'function abs(x){return ((x < 0.0) ? -x : x)} {print abs($9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' \
+> $projPath/alignment/sam/fragmentLen/${histName5}_fragmentLen.txt
+#
+samtools view -F 0x04 $projPath/alignment/sam/${histName6}_bowtie2.sam | awk -F'\t' \
+'function abs(x){return ((x < 0.0) ? -x : x)} {print abs($9)}' | sort | uniq -c | awk -v OFS="\t" '{print $2, $1/2}' \
+> $projPath/alignment/sam/fragmentLen/${histName6}_fragmentLen.txt
 
 # visualize in R
 ## fragment_length.rmd
@@ -168,7 +188,7 @@ awk '$1==$4 && $6-$2 < 1000 {print $0}' $projPath/alignment/bed/${histName2}_bow
 cut -f 1,2,6 $projPath/alignment/bed/${histName2}_bowtie2.clean.bed | sort -k1,1 -k2,2n -k3,3n  \
 > $projPath/alignment/bed/${histName2}_bowtie2.fragments.bed
 
-# Assess replicate reproducibility
+# Assess fragment count
 ## We use the mid point of each fragment to infer which 500bp bins does this fragment belong to.
 ## We then count the number of fragments in each bin and generate a bed file with the bin coordinates and fragment counts.
 awk -v w=$binLen '{print $1, int(($2 + $3)/(2*w))*w + w/2}' $projPath/alignment/bed/${histName1}_bowtie2.fragments.bed | sort -k1,1V -k2,2n | uniq -c | \

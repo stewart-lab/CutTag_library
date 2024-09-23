@@ -32,9 +32,9 @@ library(ggpubr)
 library(corrplot)
 library(GenomicRanges)
 library(chromVAR)
-projPath = "/w5home/bmoore/cut_and_tag"
-sampleList = c("H3K27me3", "H3K36me3")
-histList = c("H3K27me3", "H3K36me3")
+projPath = "/w5home/rmillikin/sequencing/kratz/2024-06-14-cuttag/output_dir"
+sampleList = c("Brd4", "H3K27me3", "H3K4me3", "H3K27ac", "H3K4me1", "pRBP1_CTD")
+histList = c("Brd4", "H3K27me3", "H3K4me3", "H3K27ac", "H3K4me1", "pRBP1_CTD")
 setwd(projPath)
 ```
 
@@ -44,12 +44,12 @@ peakN = c()
 peakWidth = c()
 #peakType = c("control", "top0.01")
 for(hist in sampleList){
-  histInfo = strsplit(hist, "_")[[1]]
+  histInfo = hist#strsplit(hist, ".")[[1]]
   if(histInfo[1] != "IgG"){
     #for(type in peakType){
-      peakInfo = read.table(paste0(projPath, "/peakCalling/SEACR/", hist, "_seacr_top0.01.peaks.stringent.bed"), header = FALSE, fill = TRUE)  %>% mutate(width = abs(V3-V2))
-      peakN = data.frame(peakN = nrow(peakInfo), peakType = "top0.01", Histone = histInfo[1], Replicate = histInfo[2]) %>% rbind(peakN, .)
-      peakWidth = data.frame(width = peakInfo$width, peakType = "top0.01", Histone = histInfo[1], Replicate = histInfo[2])  %>% rbind(peakWidth, .)
+      peakInfo = read.table(paste0(projPath, "/peakCalling/SEACR/", hist, "_seacr.peaks.relaxed.bed"), header = FALSE, fill = TRUE)  %>% mutate(width = abs(V3-V2))
+      peakN = data.frame(peakN = nrow(peakInfo), peakType = "relaxed0.4", Histone = histInfo[1], Replicate = histInfo[2]) %>% rbind(peakN, .)
+      peakWidth = data.frame(width = peakInfo$width, peakType = "relaxed0.4", Histone = histInfo[1], Replicate = histInfo[2])  %>% rbind(peakWidth, .)
     #}
   }
 }
@@ -61,15 +61,15 @@ peakN %>% select(Histone, Replicate, peakType, peakN)
 # The reproducibility is calculated by
 # peaks overlapping rep1 and rep2/# peaks of rep1 or rep2 * 100
 
-histL = c("H3K27me3", "H3K36me3")
+
 #repL = paste0("rep", 1:2)
-peakType = "top0.01" #c("control", "top0.01")
+peakType = "relaxed0.4" #c("control", "top0.01")
 peakOverlap = c()
 for(type in peakType){
-  for(hist in histL){
+  for(hist in histList){
     overlap.gr = GRanges()
     #for(rep in repL){
-      peakInfo = read.table(paste0(projPath, "/peakCalling/SEACR/", hist,"_seacr_", type, ".peaks.stringent.bed"), header = FALSE, fill = TRUE)
+      peakInfo = read.table(paste0(projPath, "/peakCalling/SEACR/", hist,"_seacr.peaks.relaxed.bed"), header = FALSE, fill = TRUE)
       peakInfo.gr = GRanges(peakInfo$V1, IRanges(start = peakInfo$V2, end = peakInfo$V3), strand = "*")
       if(length(overlap.gr) >0){
         overlap.gr = overlap.gr[findOverlaps(overlap.gr, peakInfo.gr)@from]
@@ -92,11 +92,11 @@ library(chromVAR)
 
 bamDir = paste0(projPath, "/alignment/bam")
 inPeakData = c()
-histL = c("H3K27me3", "H3K36me3")
+#histL = c("H3K27me3", "H3K36me3")
 ## overlap with bam file to get count
-for(hist in histL){
+for(hist in histList){
   #for(rep in repL){
-    peakRes = read.table(paste0(projPath, "/peakCalling/SEACR/", hist, "_seacr_top0.01.peaks.stringent.bed"), header = FALSE, fill = TRUE)
+    peakRes = read.table(paste0(projPath, "/peakCalling/SEACR/", hist, "_seacr.peaks.relaxed.bed"), header = FALSE, fill = TRUE)
     peak.gr = GRanges(seqnames = peakRes$V1, IRanges(start = peakRes$V2, end = peakRes$V3), strand = "*")
     bamFile = paste0(bamDir, "/", hist, "_bowtie2.mapped.bam")
     fragment_counts <- getCounts(bamFile, peak.gr, paired = TRUE, by_rg = FALSE, format = "bam")
@@ -118,7 +118,8 @@ fig7A = peakN %>% ggplot(aes(x = Histone, y = peakN, fill = Histone)) +
     scale_color_viridis(discrete = TRUE, begin = 0.1, end = 0.9) +
     theme_bw(base_size = 18) +
     ylab("Number of Peaks") +
-    xlab("")
+    xlab("") +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 fig7B = peakWidth %>% ggplot(aes(x = Histone, y = width, fill = Histone)) +
     geom_violin() +
@@ -128,7 +129,8 @@ fig7B = peakWidth %>% ggplot(aes(x = Histone, y = width, fill = Histone)) +
     scale_y_continuous(trans = "log", breaks = c(400, 3000, 22000)) +
     theme_bw(base_size = 18) +
     ylab("Width of Peaks") +
-    xlab("")
+    xlab("") + 
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 fig7C = peakReprod %>% ggplot(aes(x = Histone, y = peakReprodRate, fill = Histone, label = round(peakReprodRate, 2))) +
     geom_bar(stat = "identity") +
@@ -138,7 +140,7 @@ fig7C = peakReprod %>% ggplot(aes(x = Histone, y = peakReprodRate, fill = Histon
     scale_color_viridis(discrete = TRUE, begin = 0.1, end = 0.9) +
     theme_bw(base_size = 18) +
     ylab("% of Peaks Reproduced") +
-    xlab("")
+    xlab("") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 fig7D = frip %>% ggplot(aes(x = Histone, y = frip, fill = Histone, label = round(frip, 2))) +
     geom_boxplot() +
@@ -147,7 +149,7 @@ fig7D = frip %>% ggplot(aes(x = Histone, y = frip, fill = Histone, label = round
     scale_color_viridis(discrete = TRUE, begin = 0.1, end = 0.9) +
     theme_bw(base_size = 18) +
     ylab("% of Fragments in Peaks") +
-    xlab("")
+    xlab("") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
 pdf(file= "peak_plots.pdf", width=7, height=7)
 ggarrange(fig7A, fig7B, fig7C, fig7D, ncol = 2, nrow=2, common.legend = TRUE, legend="bottom")

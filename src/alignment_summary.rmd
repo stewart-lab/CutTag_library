@@ -26,18 +26,18 @@ library(stringr)
 library(viridis)
 library(ggpubr)
 library(corrplot)
-projPath = "/w5home/bmoore/cut_and_tag"
-sampleList = c("H3K27me3_25", "H3K36me3_25")
-histList = c("H3K27me3", "H3K36me3")
+projPath = "/w5home/rmillikin/sequencing/kratz/2024-06-14-cuttag/output_dir"
+sampleList = c("Brd4", "H3K27me3", "H3K4me3", "H3K27ac", "H3K4me1", "pRBP1_CTD")
+histList = c("Brd4", "H3K27me3", "H3K4me3", "H3K27ac", "H3K4me1", "pRBP1_CTD")
 setwd(projPath)
 ```
 ```{r get_data}
 ## Collect the alignment results from the bowtie2 alignment summary files
 alignResult = c()
 for(hist in sampleList){
-  alignRes = read.table(paste0(projPath, "/alignment_25/sam/bowtie2_summary/", hist, "_bowtie2.txt"), header = FALSE, fill = TRUE)
+  alignRes = read.table(paste0(projPath, "/alignment/sam/bowtie2_summary/", hist, "_bowtie2.txt"), header = FALSE, fill = TRUE)
   alignRate = substr(alignRes$V1[6], 1, nchar(as.character(alignRes$V1[6]))-1)
-  histInfo = strsplit(hist, "_")[[1]]
+  histInfo = hist#strsplit(hist, "_")[[1]]
   print(histInfo)
   alignResult = data.frame(Histone = histInfo[1], Replicate = histInfo[2], 
                            SequencingDepth = alignRes$V1[1] %>% as.character %>% as.numeric, 
@@ -51,9 +51,9 @@ alignResult %>% mutate(AlignmentRate_axl = paste0(AlignmentRate_axl, "%"))
 ```{r spikein}
 spikeAlign = c()
 for(hist in sampleList){
-  spikeRes = read.table(paste0(projPath, "/alignment_25/sam/bowtie2_summary/", hist, "_bowtie2_spikeIn.txt"), header = FALSE, fill = TRUE)
+  spikeRes = read.table(paste0(projPath, "/alignment/sam/bowtie2_summary/", hist, "_bowtie2_spikeIn.txt"), header = FALSE, fill = TRUE)
   alignRate = substr(spikeRes$V1[6], 1, nchar(as.character(spikeRes$V1[6]))-1)
-  histInfo = strsplit(hist, "_")[[1]]
+  histInfo = hist #strsplit(hist, "_")[[1]]
   spikeAlign = data.frame(Histone = histInfo[1], Replicate = histInfo[2], 
                           SequencingDepth = spikeRes$V1[1] %>% as.character %>% as.numeric, 
                           MappedFragNum_spikeIn = spikeRes$V1[4] %>% as.character %>% as.numeric + spikeRes$V1[5] %>% as.character %>% as.numeric, 
@@ -79,7 +79,7 @@ fig3A = alignResult %>% ggplot(aes(x = Histone, y = SequencingDepth/1000000, fil
     scale_color_viridis(discrete = TRUE, begin = 0.1, end = 0.9) +
     theme_bw(base_size = 18) +
     ylab("Sequencing Depth per Million") +
-    xlab("") + 
+    xlab("") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
     ggtitle("A. Sequencing Depth")
 
 fig3B = alignResult %>% ggplot(aes(x = Histone, y = MappedFragNum_axl/1000000, fill = Histone)) +
@@ -89,7 +89,7 @@ fig3B = alignResult %>% ggplot(aes(x = Histone, y = MappedFragNum_axl/1000000, f
     scale_color_viridis(discrete = TRUE, begin = 0.1, end = 0.9) +
     theme_bw(base_size = 18) +
     ylab("Mapped Fragments per Million") +
-    xlab("") +
+    xlab("") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
     ggtitle("B. Alignable Fragment (Axl)")
 
 fig3C = alignResult %>% ggplot(aes(x = Histone, y = AlignmentRate_axl, fill = Histone)) +
@@ -99,7 +99,7 @@ fig3C = alignResult %>% ggplot(aes(x = Histone, y = AlignmentRate_axl, fill = Hi
     scale_color_viridis(discrete = TRUE, begin = 0.1, end = 0.9) +
     theme_bw(base_size = 18) +
     ylab("% of Mapped Fragments") +
-    xlab("") +
+    xlab("") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
     ggtitle("C. Alignment Rate (Axl)")
 
 fig3D = spikeAlign %>% ggplot(aes(x = Histone, y = AlignmentRate_spikeIn, fill = Histone)) +
@@ -109,10 +109,10 @@ fig3D = spikeAlign %>% ggplot(aes(x = Histone, y = AlignmentRate_spikeIn, fill =
     scale_color_viridis(discrete = TRUE, begin = 0.1, end = 0.9) +
     theme_bw(base_size = 18) +
     ylab("Spike-in Alignment Rate") +
-    xlab("") +
+    xlab("") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
     ggtitle("D. Alignment Rate (E.coli)")
 
-pdf(file= "alignment_summary.pdf")
+pdf(file= paste0(projPath, "/alignment/alignment_summary.pdf"))
 ggarrange(fig3A, fig3B, fig3C, fig3D, ncol = 2, nrow=2, common.legend = TRUE, legend="bottom")
 dev.off()
 ```
