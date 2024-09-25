@@ -1,22 +1,24 @@
 # Genome metadata
-genome="GRCm39"
-version="2024-A"
+genome="mm10"
+version="2020-A"
 
 
 # Set up source and build directories
-build="GRCm39-GENCODEv33_build"
+build="${genome}-${version}-build"
 mkdir -p "$build"
 
 
 # Download source files if they do not exist in reference_sources/ folder
-source="reference_sources"
+source="${genome}-${version}-reference-sources"
 mkdir -p "$source"
 
 
-fasta_url="http://ftp.ensembl.org/pub/release-110/fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.primary_assembly.fa.gz"
-fasta_in="${source}/Mus_musculus.GRCm39.dna.primary_assembly.fa"
-gtf_url="http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M33/gencode.vM33.primary_assembly.annotation.gtf.gz"
-gtf_in="${source}/gencode.vM33.primary_assembly.annotation.gtf"
+fasta_url="http://ftp.ensembl.org/pub/release-98/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz"
+fasta_in="${source}/Mus_musculus.GRCm38.dna.primary_assembly.fa"
+gtf_url="http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M23/gencode.vM23.primary_assembly.annotation.gtf.gz"
+gtf_in="${source}/gencode.vM23.primary_assembly.annotation.gtf"
+motifs_url="http://jaspar2018.genereg.net/download/CORE/JASPAR2018_CORE_vertebrates_non-redundant_pfms_jaspar.txt"
+motifs_in="${source}/JASPAR2018_CORE_vertebrates_non-redundant_pfms_jaspar.txt"
 
 
 if [ ! -f "$fasta_in" ]; then
@@ -24,6 +26,9 @@ if [ ! -f "$fasta_in" ]; then
 fi
 if [ ! -f "$gtf_in" ]; then
     curl -sS "$gtf_url" | zcat > "$gtf_in"
+fi
+if [ ! -f "$motifs_in" ]; then
+    curl -sS "$motifs_url" > "$motifs_in"
 fi
 
 
@@ -66,10 +71,17 @@ cat "$gtf_in" \
 
 
 # Define string patterns for GTF tags
-# Since Ensembl 110, polymorphic pseudogenes are now just protein_coding.
-# Readthrough genes are annotated with the readthrough_transcript tag.
+# NOTES:
+# - Since GENCODE release 31/M22 (Ensembl 97), the "lncRNA" and "antisense"
+#   biotypes are part of a more generic "lncRNA" biotype.
+# - These filters are relevant only to GTF files from GENCODE. The GTFs from
+#   Ensembl release 98 have the following differences:
+#   - The names "gene_biotype" and "transcript_biotype" are used instead of
+#     "gene_type" and "transcript_type".
+#   - Readthrough transcripts are present but are not marked with the
+#     "readthrough_transcript" tag.
 BIOTYPE_PATTERN=\
-"(protein_coding|protein_coding_LoF|lncRNA|\
+"(protein_coding|lncRNA|\
 IG_C_gene|IG_D_gene|IG_J_gene|IG_LV_gene|IG_V_gene|\
 IG_V_pseudogene|IG_J_pseudogene|IG_C_pseudogene|\
 TR_C_gene|TR_D_gene|TR_J_gene|TR_V_gene|\
@@ -106,7 +118,30 @@ grep -Ff "${build}/gene_allowlist" "$gtf_modified" \
     >> "$gtf_filtered"
 
 
+# Change motif headers so the human-readable motif name precedes the motif
+# identifier. So ">MA0004.1    Arnt" -> ">Arnt_MA0004.1".
+motifs_modified="$build/$(basename "$motifs_in").modified"
+awk '{
+    if ( substr($1, 1, 1) == ">" ) {
+        print ">" $2 "_" substr($1,2)
+    } else {
+        print
+    }
+}' "$motifs_in" > "$motifs_modified"
+
+
+# Create a config file
+config_in="${build}/config"
+echo """{
+    organism: \"Mus_musculus\"
+    genome: [\""$genome"\"]
+    input_fasta: [\""$fasta_modified"\"]
+    input_gtf: [\""$gtf_filtered"\"]
+    input_motifs: \""$motifs_modified"\"
+    non_nuclear_contigs: [\"chrM\"]
+}""" > "$config_in"
+
+
 # Create reference package
-cellranger mkref --ref-version="$version" \
-    --genome="$genome" --fasta="$fasta_modified" --genes="$gtf_filtered" \
-    --nthreads=16
+cellranger-arc mkref --ref-version="$version" \
+    --config="$config_in"

@@ -1,0 +1,68 @@
+---
+title: "Single cell Cut and Tag"
+author: "Beth Moore"
+date: "09.24.2024"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{scCutandTag}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+# Processing sc cut and tag data from cellranger-atac mapping
+
+# load libraries
+```{r libraries}
+library(reticulate)
+use_condaenv("/w5home/bmoore/miniconda3/envs/cut_tag_sc")
+library(Signac)
+library(Seurat)
+library(GenomicRanges)
+library(ggplot2)
+library(patchwork)
+```
+# read in counts
+```{r read_matrices}
+projPath <- "/w5home/bmoore/cut_and_tag/sample_sccuttag_pbmc/"
+setwd(projPath)
+counts <- Read10X_h5(filename = "10k_pbmc_ATACv2_nextgem_Chromium_Controller_filtered_peak_bc_matrix.h5")
+metadata <- read.csv(
+  file = "10k_pbmc_ATACv2_nextgem_Chromium_Controller_singlecell.csv",
+  header = TRUE,
+  row.names = 1
+)
+```
+# create chromatin seurat obj
+```{r seurat}
+chrom_assay <- CreateChromatinAssay(
+  counts = counts,
+  sep = c(":", "-"),
+  fragments = "10k_pbmc_ATACv2_nextgem_Chromium_Controller_fragments.tsv.gz",
+  min.cells = 10,
+  min.features = 200
+)
+
+pbmc <- CreateSeuratObject(
+  counts = chrom_assay,
+  assay = "peaks",
+  meta.data = metadata
+)
+pbmc
+```
+```{r checkout}
+pbmc[['peaks']]
+granges(pbmc)
+```
+# remove peaks belonging to chromosome scaffolds
+```{r clean_peaks}
+peaks.keep <- seqnames(granges(pbmc)) %in% standardChromosomes(granges(pbmc))
+pbmc <- pbmc[as.vector(peaks.keep), ]
+```
+# get gene annotations
+```{r gene_annot}
+library(AnnotationHub)
+ah <- AnnotationHub()
+
+# Search for the Ensembl 98 EnsDb for Homo sapiens on AnnotationHub
+query(ah, "EnsDb.Hsapiens.v98")
+
+```
