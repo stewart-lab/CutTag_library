@@ -18,7 +18,9 @@ library(Signac)
 library(Seurat)
 library(GenomicRanges)
 library(ggplot2)
+library(ggpubr)
 library(patchwork)
+library(hdf5r)
 ```
 # read in counts
 ```{r read_matrices}
@@ -60,9 +62,333 @@ pbmc <- pbmc[as.vector(peaks.keep), ]
 # get gene annotations
 ```{r gene_annot}
 library(AnnotationHub)
+library(ensembldb)
 ah <- AnnotationHub()
 
 # Search for the Ensembl 98 EnsDb for Homo sapiens on AnnotationHub
 query(ah, "EnsDb.Hsapiens.v98")
+ensdb_v98 <- ah[["AH75011"]]
+```
+# add gene annotations
+```{r gene_annot2}
+library(biovizBase)
+# extract gene annotations from EnsDb
+annotations <- GetGRangesFromEnsDb(ensdb = ensdb_v98)
 
+# change to UCSC style since the data was mapped to hg38
+seqlevels(annotations) <- paste0('chr', seqlevels(annotations))
+genome(annotations) <- "hg38"
+# add the gene information to the object
+Annotation(pbmc) <- annotations
+```
+# Compute QC metrics
+```{r qc_metrics}
+# compute nucleosome signal score per cell
+pbmc <- NucleosomeSignal(object = pbmc)
+
+# compute TSS enrichment score per cell
+pbmc <- TSSEnrichment(object = pbmc)
+
+# add fraction of reads in peaks
+pbmc$pct_reads_in_peaks <- pbmc$peak_region_fragments / pbmc$passed_filters * 100
+
+# add blacklist ratio
+pbmc$blacklist_ratio <- FractionCountsInRegion(
+  object = pbmc, 
+  assay = 'peaks',
+  regions = blacklist_hg38_unified
+)
+```
+# Visualize
+```{r viz}
+# TSS.enrichment via scatterplot
+p1 <- DensityScatter(pbmc, x = 'nCount_peaks', y = 'TSS.enrichment', 
+                      log_x = TRUE, quantiles = TRUE)
+
+# Fragment length for high/low nucelosome strength
+pbmc$nucleosome_group <- ifelse(pbmc$nucleosome_signal > 4, 'NS > 4', 'NS < 4')
+p2 <- FragmentHistogram(object = pbmc, group.by = 'nucleosome_group')
+
+# Distribution of each QC metric
+p3 <- VlnPlot(
+  object = pbmc,
+  features = c('nCount_peaks', 'TSS.enrichment', 'blacklist_ratio', 
+              'nucleosome_signal', 'pct_reads_in_peaks'),
+  pt.size = 0.1,
+  ncol = 5
+)
+pdf(file= "peak_plots.pdf", width=7, height=7)
+p4 <- ggarrange(p1, p2, ncol = 2, nrow = 1)
+p5 <- ggarrange(p3, ncol = 1, nrow = 1)
+ggarrange(p4, p5, ncol=1, nrow = 2, common.legend = TRUE, legend="bottom")
+dev.off()
+```
+# remove Outliers
+```{r remove_out}
+# remove outliers for QC metrics- adjust thresholds based on your data
+pbmc <- subset(
+  x = pbmc,
+  subset = nCount_peaks > 9000 &
+    nCount_peaks < 100000 &
+    pct_reads_in_peaks > 40 &
+    blacklist_ratio < 0.01 &
+    nucleosome_signal < 4 &
+    TSS.enrichment > 4
+)
+pbmc
+```
+# normalization, feature selection, dim reduction
+```{r norm-dimred}
+# TFIDF normalization
+pbmc <- RunTFIDF(pbmc)
+# feature selection
+pbmc <- FindTopFeatures(pbmc, min.cutoff = 'q0')
+# dimensionality reduction
+pbmc <- RunSVD(pbmc)
+```
+# assess technical variation
+```{r}
+# assess the correlation between each LSI component and sequencing depth
+dc <- DepthCor(pbmc)
+pdf(file = "depth_correlation.pdf", width=4, height=4)
+print(dc)
+dev.off()
+```
+# umap and clustering
+```{r umap-cluster}
+# first dimension is dropped for downstream analysis because found to vary with depth
+pbmc <- RunUMAP(object = pbmc, reduction = 'lsi', dims = 2:30)
+pbmc <- FindNeighbors(object = pbmc, reduction = 'lsi', dims = 2:30)
+pbmc <- FindClusters(object = pbmc, verbose = FALSE, algorithm = 3)
+```
+```{r Visualize}
+dp <- DimPlot(object = pbmc, label = TRUE) + NoLegend()
+pdf(file = "cluster_umap.pdf")
+print(dp)
+dev.off()
+```
+# gene activity matrix
+```{r gene_activity}
+# try to quantify the activity of each gene in the genome by assessing 
+# the chromatin accessibility associated with the gene
+
+# extract gene coords to include 2kb upstream (promoter)
+# then count the number of fragments for each cell that map to each of these regions
+
+gene.activities <- GeneActivity(pbmc)
+```
+# add to seurat
+```{r addto}
+# add the gene activity matrix to the Seurat object as a new assay and normalize it
+pbmc[['RNA']] <- CreateAssayObject(counts = gene.activities)
+pbmc <- NormalizeData(
+  object = pbmc,
+  assay = 'RNA',
+  normalization.method = 'LogNormalize',
+  scale.factor = median(pbmc$nCount_RNA)
+)
+```
+# visualize the activities of marker genes
+```{r marker_genes}
+# activities of canonical marker genes to help interpret our ATAC-seq clusters
+DefaultAssay(pbmc) <- 'RNA'
+
+fp <- FeaturePlot(
+          object = pbmc,
+          features = c('MS4A1', 'CD3D', 'LEF1', 'NKG7', 'TREM1', 'LYZ'),
+          pt.size = 0.1,
+          max.cutoff = 'q95',
+          ncol = 3
+          )
+pdf(file = "gene_feature_plots.pdf", width=7, height=5)
+print(fp)
+dev.off()
+```
+# integrate with scRNAseq data
+```{r load_Data}
+# Load the pre-processed scRNA-seq data for PBMCs
+pbmc_rna <- readRDS("pbmc_10k_v3.rds")
+pbmc_rna <- UpdateSeuratObject(pbmc_rna)
+```
+```{r transfer_anchors}
+# transfer anchors to chromatin assay
+transfer.anchors <- FindTransferAnchors(
+  reference = pbmc_rna,
+  query = pbmc,
+  reduction = 'cca'
+)
+predicted.labels <- TransferData(
+  anchorset = transfer.anchors,
+  refdata = pbmc_rna$celltype,
+  weight.reduction = pbmc[['lsi']],
+  dims = 2:30
+)
+pbmc <- AddMetaData(object = pbmc, metadata = predicted.labels)
+```
+```{r viz_labels}
+plot1 <- DimPlot(
+  object = pbmc_rna,
+  group.by = 'celltype',
+  label = TRUE,
+  repel = TRUE) + NoLegend() + ggtitle('scRNA-seq')
+
+plot2 <- DimPlot(
+  object = pbmc,
+  group.by = 'predicted.id',
+  label = TRUE,
+  repel = TRUE) + NoLegend() + ggtitle('scATAC-seq')
+
+pdf(file = "seurat_mapping_plot.pdf", width=7, height=5)
+plot1 + plot2
+dev.off()
+```
+# get rid of lowly predicted cells
+```{r trim}
+predicted_id_counts <- table(pbmc$predicted.id)
+
+# Identify the predicted.id values that have more than 20 cells
+major_predicted_ids <- names(predicted_id_counts[predicted_id_counts > 20])
+pbmc <- pbmc[, pbmc$predicted.id %in% major_predicted_ids]
+```
+# update cell identities
+```{r idents}
+# change cell identities to the per-cell predicted labels
+Idents(pbmc) <- pbmc$predicted.id
+```
+# combine clustering and lebel transfer results
+```{r combine}
+# replace each cluster label with its most likely predicted label
+for(i in levels(pbmc)) {
+  cells_to_reid <- WhichCells(pbmc, idents = i)
+  newid <- names(which.max(table(pbmc$predicted.id[cells_to_reid])))
+  Idents(pbmc, cells = cells_to_reid) <- newid
+}
+```
+# find differentially expressed peaks
+```{r depeaks}
+library(presto)
+# change back to working with peaks instead of gene activities
+DefaultAssay(pbmc) <- 'peaks'
+
+# wilcox is the default option for test.use
+da_peaks <- FindMarkers(
+  object = pbmc,
+  ident.1 = "CD4 Naive",
+  ident.2 = "CD14+ Monocytes",
+  test.use = 'wilcox',
+  min.pct = 0.1
+)
+
+head(da_peaks)
+```
+# another method for DE peaks- takes > 2 hours to complete
+```{r de peaks2}
+# change back to working with peaks instead of gene activities
+DefaultAssay(pbmc) <- 'peaks'
+
+# Use logistic regression, set total fragment no. as latent var
+lr_da_peaks <- FindMarkers(
+  object = pbmc,
+  ident.1 = "CD4 Naive",
+  ident.2 = "CD14+ Monocytes",
+  test.use = 'LR',
+  latent.vars = 'nCount_peaks',
+  min.pct = 0.1
+)
+head(lr_da_peaks)
+```
+# plot
+```{r plotDEpeaks}
+plot1 <- VlnPlot(
+  object = pbmc,
+  features = rownames(da_peaks)[1],
+  pt.size = 0.1,
+  idents = c("CD4 Naive","CD14+ Monocytes")
+)
+plot2 <- FeaturePlot(
+  object = pbmc,
+  features = rownames(da_peaks)[1],
+  pt.size = 0.1
+)
+
+pdf(file = "DEpeak_plot.pdf", width=7, height=5)
+plot1 | plot2
+dev.off()
+```
+# find closest gene feature
+```{r closestgene}
+open_cd4naive <- rownames(da_peaks[da_peaks$avg_log2FC > 3, ])
+open_cd14mono <- rownames(da_peaks[da_peaks$avg_log2FC < -3, ])
+
+closest_genes_cd4naive <- ClosestFeature(pbmc, regions = open_cd4naive)
+closest_genes_cd14mono <- ClosestFeature(pbmc, regions = open_cd14mono)
+```
+# GO enrichment
+```{r go}
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(enrichplot)
+# for celltypes
+cd4naive_ego <- enrichGO(gene = closest_genes_cd4naive$gene_id,
+                keyType = "ENSEMBL",
+                OrgDb = org.Hs.eg.db,
+                ont = "BP",
+                pAdjustMethod = "BH",
+                pvalueCutoff = 0.05,
+                qvalueCutoff = 0.05,
+                readable = TRUE)
+
+bp1 <- barplot(cd4naive_ego,showCategory = 20)
+# next
+cd14mono_ego <- enrichGO(gene = closest_genes_cd14mono$gene_id,
+                keyType = "ENSEMBL",
+                OrgDb = org.Hs.eg.db,
+                ont = "BP",
+                pAdjustMethod = "BH",
+                pvalueCutoff = 0.05,
+                qvalueCutoff = 0.05,
+                readable = TRUE)
+
+bp2 <- barplot(cd14mono_ego,showCategory = 20)
+pdf(file="GOterm_barplots.pdf", width=8, height=11)
+ggarrange(bp1, bp2, ncol = 1, nrow = 2)
+dev.off()
+```
+# check genomic regions
+```{r genomic}
+# pseudo-bulk accessibility tracks, where signal from all cells 
+#within a group have been averaged together to visualize the 
+#DNA accessibility in a region
+
+# sort plotting order
+pbmc <- SortIdents(pbmc)
+# find DA peaks overlapping gene of interest
+regions_highlight <- subsetByOverlaps(StringToGRanges(open_cd4naive), LookupGeneCoords(pbmc, "CD4"))
+
+cp <- CoveragePlot(
+  object = pbmc,
+  region = "CD4",
+  region.highlight = regions_highlight,
+  extend.upstream = 1000,
+  extend.downstream = 1000
+)
+# second cell type
+regions_highlight <- subsetByOverlaps(StringToGRanges(open_cd14mono), LookupGeneCoords(pbmc, "LYZ"))
+
+cp2 <- CoveragePlot(
+  object = pbmc,
+  region = "LYZ",
+  region.highlight = regions_highlight,
+  extend.upstream = 1000,
+  extend.downstream = 5000
+)
+
+pdf(file="CoveragePlot.pdf", width= 8, height = 11)
+ggarrange(cp, cp2, ncol = 1, nrow = 2)
+dev.off()
+```
+# save object and session data
+```{r save}
+saveRDS(pbmc, file = paste0("chromatin-assay_obj.rds"))
+writeLines(capture.output(sessionInfo()), paste0("sessionInfo.txt"))
 ```
