@@ -21,14 +21,38 @@ library(ggplot2)
 library(ggpubr)
 library(patchwork)
 library(hdf5r)
+library(jsonlite)
+library(AnnotationHub)
+library(ensembldb)
+```
+```{r set_variables}
+# set variables
+GIT_DIR <- "/w5home/bmoore/scRNAseq_downstream/"
+config <- jsonlite::fromJSON(file.path(GIT_DIR, "config.json"))
+projPath <- config$sc_cut_tag$projPath
+H5 <- config$sc_cut_tag$H5
+METADATA <- config$sc_cut_tag$metadata
+FRAGMENTS <- config$sc_cut_tag$fragments
+GENES <- config$sc_cut_tag$genes
+SC.OBJ <- config$sc_cut_tag$processed_sc_seurat_file
 ```
 # read in counts
 ```{r read_matrices}
-projPath <- "/w5home/bmoore/cut_and_tag/sample_sccuttag_pbmc/"
 setwd(projPath)
-counts <- Read10X_h5(filename = "10k_pbmc_ATACv2_nextgem_Chromium_Controller_filtered_peak_bc_matrix.h5")
+if(H5!="NA"){
+  counts <- Read10X_h5(filename = )
+} else {
+  counts <- Matrix::readMM("filtered_peak_bc_matrix/matrix.mtx")
+  barcodes <- readLines("filtered_peak_bc_matrix/barcodes.tsv")
+  peaks <- read.table("filtered_peak_bc_matrix/peaks.bed", sep="\t")
+  peaknames <- paste(peaks$V1, peaks$V2, peaks$V3, sep="-")
+
+colnames(counts) <- barcodes
+rownames(counts) <- peaknames
+}
+
 metadata <- read.csv(
-  file = "10k_pbmc_ATACv2_nextgem_Chromium_Controller_singlecell.csv",
+  file = METADATA,
   header = TRUE,
   row.names = 1
 )
@@ -38,7 +62,7 @@ metadata <- read.csv(
 chrom_assay <- CreateChromatinAssay(
   counts = counts,
   sep = c(":", "-"),
-  fragments = "10k_pbmc_ATACv2_nextgem_Chromium_Controller_fragments.tsv.gz",
+  fragments = FRAGMENTS,
   min.cells = 10,
   min.features = 200
 )
@@ -61,10 +85,8 @@ pbmc <- pbmc[as.vector(peaks.keep), ]
 ```
 # get gene annotations
 ```{r gene_annot}
-library(AnnotationHub)
-library(ensembldb)
+# get annoations from Annotatiion hub
 ah <- AnnotationHub()
-
 # Search for the Ensembl 98 EnsDb for Homo sapiens on AnnotationHub
 query(ah, "EnsDb.Hsapiens.v98")
 ensdb_v98 <- ah[["AH75011"]]
@@ -116,8 +138,13 @@ p3 <- VlnPlot(
               'nucleosome_signal', 'pct_reads_in_peaks'),
   pt.size = 0.1,
   ncol = 5
-)
-pdf(file= "peak_plots.pdf", width=7, height=7)
+) & theme(
+    strip.text = element_text(size = 5),  # Adjusts the facet (individual plot) titles
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+    complete = TRUE
+  ) & NoLegend()
+
+pdf(file= "QC_plots.pdf", width=7, height=7)
 p4 <- ggarrange(p1, p2, ncol = 2, nrow = 1)
 p5 <- ggarrange(p3, ncol = 1, nrow = 1)
 ggarrange(p4, p5, ncol=1, nrow = 2, common.legend = TRUE, legend="bottom")
@@ -195,7 +222,7 @@ DefaultAssay(pbmc) <- 'RNA'
 
 fp <- FeaturePlot(
           object = pbmc,
-          features = c('MS4A1', 'CD3D', 'LEF1', 'NKG7', 'TREM1', 'LYZ'),
+          features = GENES,
           pt.size = 0.1,
           max.cutoff = 'q95',
           ncol = 3
@@ -207,7 +234,7 @@ dev.off()
 # integrate with scRNAseq data
 ```{r load_Data}
 # Load the pre-processed scRNA-seq data for PBMCs
-pbmc_rna <- readRDS("pbmc_10k_v3.rds")
+pbmc_rna <- readRDS(SC.OBJ)
 pbmc_rna <- UpdateSeuratObject(pbmc_rna)
 ```
 ```{r transfer_anchors}
@@ -273,8 +300,8 @@ DefaultAssay(pbmc) <- 'peaks'
 # wilcox is the default option for test.use
 da_peaks <- FindMarkers(
   object = pbmc,
-  ident.1 = "CD4 Naive",
-  ident.2 = "CD14+ Monocytes",
+  #ident.1 = "CD4 Naive",
+  #ident.2 = "CD14+ Monocytes",
   test.use = 'wilcox',
   min.pct = 0.1
 )

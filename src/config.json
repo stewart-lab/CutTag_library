@@ -22,5 +22,13 @@
     "chromSize":"/AmexG_v6.0-DD_axolotl-omics_dataset/chromSize_axl.txt",
     "seacr":"/w5home/bmoore/miniconda3/envs/cut_tag/bin/SEACR_1.3.sh",
     "minQualityScore":2,
-    "binLen":500
+    "binLen":500,
+    "sc_cut_tag":{
+        "projPath":"/w5home/bmoore/cut_and_tag/sample_sccuttag_pbmc/",
+        "H5":"10k_pbmc_ATACv2_nextgem_Chromium_Controller_filtered_peak_bc_matrix.h5",
+        "metadata": "10k_pbmc_ATACv2_nextgem_Chromium_Controller_singlecell.csv",
+        "fragments": "10k_pbmc_ATACv2_nextgem_Chromium_Controller_fragments.tsv.gz",
+        "genes": ["MS4A1", "CD3D", "LEF1", "NKG7", "TREM1", "LYZ"],
+        "processed_sc_seurat_file": "pbmc_10k_v3.rds"
+    }
 }
