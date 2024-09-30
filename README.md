@@ -87,11 +87,56 @@ python get_peaks-visualize.py <your output dir (can be same as bowtie2 dir)> <yo
 # example:
 ~/programs/sratoolkit.3.0.5-centos_linux64/bin/fasterq-dump SRR23343778
 ```
-### Download or build reference:
+
+### Download or build reference using cellranger arc:
+*  If you have human or mouse data, you can download cellranger's prebuilt reference genomes here: https://www.10xgenomics.com/support/software/cell-ranger-arc/downloads
+*  If you are building a reference, check https://www.10xgenomics.com/support/software/cell-ranger-arc/latest/analysis/inputs/mkref
+*  Then modify the following template and run
+```
+# input ensemble genome and gtf files, as well as motif file in build_cellranger_ref.sh
+source src/build_cellranger_ref.sh
+```
 
 ### Run cellranger-atac
 ```
-# edit variables, then
+# edit variables:
+# cell_ref="" # location of cellranger reference genome
+# fastq_dir="" # location of fastq files
+# s="" # sample ID
+
 source src/run_cellranger.sh
 ```
+
+### process cut&tag counts with Signac and Seurat
+#### Make environment
+```
+conda env create -f cut_tag_sc_environment.yml
+```
+#### Activate environment
+```
+conda activate cut_tag_sc
+```
+#### Set variables in config file (found in src, modify "sc_cut_tag" part)
+```
+projPath = "folder where count data is from cell ranger"
+H5 = "name of H5 file" # if NA looks for matrix.mtx, barcodes.tsv, and peaks.bed files
+metadata = "metadata file name"
+fragments = "fragment file name"
+genes = "genes to visualize for gene activity feature plots"
+processed_sc_seurat_file = "processed scRNAseq object to help annotate cut&tag object"
+```
+#### Run Rmd file
+```
+Rscript -e "rmarkdown::render('process_scCutTag.rmd')"
+```
+Outputs:
+* chromatin-assay_obj.rds --> object with processed peaks
+* QC_plots.pdf --> plots for TSS enrichment, fragment length, blacklist ratio, nucleosome signal, pct reads in peaks
+* depth_correlation.pdf --> Correlation between sequencing depth and reduced dimension components
+* cluster_umap.pdf --> umap of clusters
+* gene_feature_plots.pdf --> gene activity plots
+* seurat_mapping_plot.pdf --> plot of scRNA annotations and their mapping for scCut&Tag annotations
+* DEpeak_plot.pdf --> differentially expressed peaks between 2 celltypes
+* GOterm_barplots.pdf --> Go enrichment plots for given celltype
+* CoveragePlot.pdf --> For given genes, showing coverage for each cell type
 
