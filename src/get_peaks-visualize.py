@@ -34,7 +34,7 @@ def main():
     histList = [sample["histName"] for sample in samples]
     sampleList=[]
     for sample in samples:
-        rep = sample["histName"]+"_rep"+str(sample["rep"])
+        rep = sample["histName"]+"Rep"+str(sample["rep"])
         sampleList.append(rep)
     print(sampleList)
     # # run alignment_summary.r for alignment visualization
@@ -117,6 +117,7 @@ def main():
 
     ## Convert into bed file format
     print("Converting into bed file format")
+    os.makedirs(bowtie2_dir + "/alignment/bed/", exist_ok=True)
     for sample in sampleList:
         bedcmd = ("bedtools bamtobed -i " + bowtie2_dir + "/alignment/bam/" + sample + "_bowtie2.mapped.bam -bedpe " +
         "> " + bowtie2_dir + "/alignment/bed/" + sample + "_bowtie2.bed")
@@ -163,6 +164,7 @@ def main():
 
     # assess spike-in calibration
     print("Assessing spike-in calibration")
+    os.makedirs(bowtie2_dir + "/alignment/bedgraph/", exist_ok=True)
     spikeIn = config["spikeIn"]
     if spikeIn == "true":
         for sample in sampleList:
@@ -173,7 +175,7 @@ def main():
                 print("Scaling factor for " + sample + " is " + str(scale_factor))
                 scale_factor = round(scale_factor, 2)
                 spikeInNormcmd = ("bedtools genomecov -bg -scale " + str(scale_factor) + " -i " + bowtie2_dir + "/alignment/bed/" 
-                                  + sample + "_bowtie2.fragments.bed -g " + config["projPath"] + "/" + config["chromSize"] +
+                                  + sample + "_bowtie2.fragments.bed -g " + config["chromSize"] +
                                 " > " + bowtie2_dir + "/alignment/bedgraph/" + sample + "_bowtie2.fragments.normalized.bedgraph")
                 addl_logfile.write("\n\nspike-in normalization cmd: " + spikeInNormcmd + "\n")
                 result = run(spikeInNormcmd, check=True, capture_output=True, text=True, shell=True)
@@ -183,7 +185,7 @@ def main():
             else:
                 print("No spike-in reads found for " + sample, ", normalize to genome")
                 spikeInNormcmd = ("bedtools genomecov -bg -i " + bowtie2_dir + "/alignment/bed/" + sample + "_bowtie2.fragments.bed -g " + 
-                                  config["projPath"] + "/" + config["chromSize"] + " > " + bowtie2_dir + "/alignment/bedgraph/" + sample + 
+                                  config["chromSize"] + " > " + bowtie2_dir + "/alignment/bedgraph/" + sample + 
                                   "_bowtie2.fragments.normalized.bedgraph")
                 addl_logfile.write("\n\nspike-in normalization cmd: " + spikeInNormcmd + "\n")
                 result = run(spikeInNormcmd, check=True, capture_output=True, text=True, shell=True)
@@ -193,7 +195,7 @@ def main():
     else:
         print("Spike-in calibration skipped, normalize to genome")
         Normcmd = ("bedtools genomecov -bg -i " + bowtie2_dir + "/alignment/bed/" + sample + "_bowtie2.fragments.bed -g " + 
-                   config["projPath"] + "/" + config["chromSize"] + " > " + bowtie2_dir + "/alignment/bedgraph/" + sample + 
+                   config["chromSize"] + " > " + bowtie2_dir + "/alignment/bedgraph/" + sample + 
                    "_bowtie2.fragments.normalized.bedgraph")
         addl_logfile.write("\n\nspike-in normalization cmd: " + Normcmd + "\n")
         result = run(Normcmd, check=True, capture_output=True, text=True, shell=True)
@@ -279,25 +281,26 @@ def main():
 
     projPath = config["projPath"]
     cores = config["cores"]
+    gtfFile = config["gtfFile"]
     # on both marks
-    computeMatrixcmd = ("computeMatrix scale-regions -S " + bowtie2_dir + "/alignment/bigwig/" + sampleList[0] + "_norm.smooth.bw " +
-                        bowtie2_dir + "/alignment/bigwig/" + sampleList[1] + "_norm.smooth.bw -R " + projPath + 
-                        "/AmexG_v6.0-DD_axolotl-omics_dataset/AmexT_v47-AmexG_v6.0-DD.gtf " + "--beforeRegionStartLength 5000 " +
-                        "--regionBodyLength 5000 --afterRegionStartLength 10000 --skipZeros -o " + bowtie2_dir +
-                        "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + histList[0] + "-" + histList[1] + "_gene_cpm_smooth10k.mat.gz " +
-                        "-p " + str(cores))
-    addl_logfile.write("\n\ncomputeMatrix cmd: " + computeMatrixcmd + "\n")
-    result = run(computeMatrixcmd, check=True, capture_output=True, text=True, shell=True)
-    if (result.returncode):
-        print("RC:", result.returncode, "\nOUT:", result.stdout, "\nERR:", result.stderr)
-    addl_logfile.write("RC:" + str(result.returncode) + "\nOUT:" + result.stdout + "\nERR:" + result.stderr)
+    # computeMatrixcmd = ("computeMatrix scale-regions -S " + bowtie2_dir + "/alignment/bigwig/" + sampleList[0] + "_norm.smooth.bw " +
+    #                     bowtie2_dir + "/alignment/bigwig/" + sampleList[1] + "_norm.smooth.bw -R " +  
+    #                     gtfFile + " --beforeRegionStartLength 5000 " +
+    #                     "--regionBodyLength 5000 --afterRegionStartLength 10000 --skipZeros -o " + bowtie2_dir +
+    #                     "/peakCalling/SEACR/" + histList[0] + "-" + histList[1] + "_gene_cpm_smooth10k.mat.gz " +
+    #                     "-p " + str(cores))
+    # addl_logfile.write("\n\ncomputeMatrix cmd: " + computeMatrixcmd + "\n")
+    # result = run(computeMatrixcmd, check=True, capture_output=True, text=True, shell=True)
+    # if (result.returncode):
+    #     print("RC:", result.returncode, "\nOUT:", result.stdout, "\nERR:", result.stderr)
+    # addl_logfile.write("RC:" + str(result.returncode) + "\nOUT:" + result.stdout + "\nERR:" + result.stderr)
 
     # on individual marks
     for sample in sampleList:
         computeMatrixcmd = ("computeMatrix scale-regions -S " + bowtie2_dir + "/alignment/bigwig/" + sample + "_norm.smooth.bw " +
-                            "-R " + projPath + "/AmexG_v6.0-DD_axolotl-omics_dataset/AmexT_v47-AmexG_v6.0-DD.gtf " +
-                            "--beforeRegionStartLength 5000 --regionBodyLength 5000 --afterRegionStartLength 10000 --skipZeros " +
-                            "-o " + bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + sample + "_gene_cpm_smooth10k.mat.gz " +
+                            "-R " + gtfFile  +
+                            " --beforeRegionStartLength 5000 --regionBodyLength 5000 --afterRegionStartLength 10000 --skipZeros " +
+                            "-o " + bowtie2_dir + "/peakCalling/SEACR/" + sample + "_gene_cpm_smooth10k.mat.gz " +
                             "-p " + str(cores))
         addl_logfile.write("\n\ncomputeMatrix cmd: " + computeMatrixcmd + "\n")
         result = run(computeMatrixcmd, check=True, capture_output=True, text=True, shell=True)
@@ -308,22 +311,22 @@ def main():
     # plot heatmap
     print("Plotting heatmap")
     stat = "mean"
-    plotHeatmapcmd = ("plotHeatmap -m " + bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + histList[0] + "-" + histList[1] + "_gene_cpm_smooth10k.mat.gz " +
-                      "-o " + bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + histList[0] + "-" + histList[1] + "_gene_cpm-smooth10k.pdf " +
-                      "--averageTypeSummaryPlot " + stat + " --sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions " +
-                      bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + histList[0] + "-" + histList[1] + "_gene.histone.cpm.smooth10k.bed")
-    addl_logfile.write("\n\nplotHeatmap cmd: " + plotHeatmapcmd + "\n")
-    result = run(plotHeatmapcmd, check=True, capture_output=True, text=True, shell=True)
-    if (result.returncode):
-        print("RC:", result.returncode, "\nOUT:", result.stdout, "\nERR:", result.stderr)
-    addl_logfile.write("RC:" + str(result.returncode) + "\nOUT:" + result.stdout + "\nERR:" + result.stderr)
+    # plotHeatmapcmd = ("plotHeatmap -m " + bowtie2_dir + "/peakCalling/SEACR/" + histList[0] + "-" + histList[1] + "_gene_cpm_smooth10k.mat.gz " +
+    #                   "-o " + bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + histList[0] + "-" + histList[1] + "_gene_cpm-smooth10k.pdf " +
+    #                   "--averageTypeSummaryPlot " + stat + " --sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions " +
+    #                   bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + histList[0] + "-" + histList[1] + "_gene.histone.cpm.smooth10k.bed")
+    # addl_logfile.write("\n\nplotHeatmap cmd: " + plotHeatmapcmd + "\n")
+    # result = run(plotHeatmapcmd, check=True, capture_output=True, text=True, shell=True)
+    # if (result.returncode):
+    #     print("RC:", result.returncode, "\nOUT:", result.stdout, "\nERR:", result.stderr)
+    # addl_logfile.write("RC:" + str(result.returncode) + "\nOUT:" + result.stdout + "\nERR:" + result.stderr)
 
     # plot heatmap for individual marks
     for sample in sampleList:
-        plotHeatmapcmd = ("plotHeatmap -m " + bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + sample + "_gene_cpm_smooth10k.mat.gz " +
-                          "-o " + bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + sample + "_gene_cpm-smooth10k.pdf " +
+        plotHeatmapcmd = ("plotHeatmap -m " + bowtie2_dir + "/peakCalling/SEACR/" + sample + "_gene_cpm_smooth10k.mat.gz " +
+                          "-o " + bowtie2_dir + "/peakCalling/SEACR/" + sample + "_gene_cpm-smooth10k.pdf " +
                           "--averageTypeSummaryPlot " + stat + " --sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions " +
-                          bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + sample + "_gene.histone.cpm.smooth10k.bed")
+                          bowtie2_dir + "/peakCalling/SEACR/" + sample + "_gene.histone.cpm.smooth10k.bed")
         addl_logfile.write("\n\nplotHeatmap cmd: " + plotHeatmapcmd + "\n")
         result = run(plotHeatmapcmd, check=True, capture_output=True, text=True, shell=True)
         if (result.returncode):

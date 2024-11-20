@@ -1,6 +1,6 @@
 # load libraries
 library(reticulate)
-use_condaenv("/w5home/bmoore/miniconda3/envs/cut_tag")
+use_condaenv("/w5home/bmoore/miniconda3/envs/cut_tag2")
 library(rmarkdown)
 library(ggplot2)
 library(tidyverse)
@@ -43,7 +43,7 @@ for (sample_name in names(samples)) {
   # append histName to histList
   histList = c(histList, sample$histName)
   # get sample name
-  samplename <- paste0(sample$histName, "_rep", as.character(sample$rep))
+  samplename <- paste0(sample$histName, "Rep", as.character(sample$rep))
   sampleList = c(sampleList, samplename)
   if(as.character(sample$rep) != "IgG"){
     #for(type in peakType){
@@ -85,7 +85,7 @@ inPeakData = c()
 for (sample_name in names(samples)) {
     sample <- samples[[sample_name]]
     # get sample name
-    samplename <- paste0(sample$histName, "_rep", as.character(sample$rep))
+    samplename <- paste0(sample$histName, "Rep", as.character(sample$rep))
     peakRes = read.table(paste0(projPath, "/peakCalling/SEACR/", samplename, "_seacr_top0.01.peaks.stringent.bed"), header = FALSE, fill = TRUE)
     peak.gr = GRanges(seqnames = peakRes$V1, IRanges(start = peakRes$V2, end = peakRes$V3), strand = "*")
     bamFile = paste0(bamDir, "/", samplename, "_bowtie2.mapped.bam")

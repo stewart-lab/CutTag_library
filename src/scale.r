@@ -1,6 +1,6 @@
 # load libraries
 library(reticulate)
-use_condaenv("/w5home/bmoore/miniconda3/envs/cut_tag")
+use_condaenv("/w5home/bmoore/miniconda3/envs/cut_tag2")
 library(rmarkdown)
 library(ggplot2)
 library(tidyverse)
@@ -50,7 +50,7 @@ for (sample_name in names(samples)) {
   subdf <- alignSummary[alignSummary$Histone == sample$histName, ]
   if (nrow(subdf) == 0) next
   # get sample name
-  samplename <- paste0(sample$histName, "_rep", as.character(sample$rep))
+  samplename <- paste0(sample$histName, "Rep", as.character(sample$rep))
   sampleList = c(sampleList, samplename)
    # Read spikeDepth
   spikeDepthFile <- paste0(projPath, "/alignment/sam/bowtie2_summary/", samplename, "_bowtie2_spikeIn.seqDepth")
@@ -85,8 +85,8 @@ print(normDepthDF)
 print("Final ScaleFactor DataFrame:")
 print(scaleFactorDF)
 
-scaleFactorDF$Histone = factor(scaleFactorDF$Histone, levels = histList)
-normDepthDF$Histone = factor(normDepthDF$Histone, levels = histList)
+#scaleFactorDF$Histone = factor(scaleFactorDF$Histone, levels = histList)
+#normDepthDF$Histone = factor(normDepthDF$Histone, levels = histList)
 #alignSummary["Replicate"]= as.character(alignSummary["Replicate"])
 alignSummary <- left_join(alignSummary, scaleFactorDF, by = c("Histone", "Replicate"))
 alignSummary <- left_join(alignSummary, normDepthDF, by = c("Histone", "Replicate"))

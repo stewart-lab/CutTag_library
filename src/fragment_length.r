@@ -1,6 +1,6 @@
 # load libraries
 library(reticulate)
-use_condaenv("/w5home/bmoore/miniconda3/envs/cut_tag")
+use_condaenv("/w5home/bmoore/miniconda3/envs/cut_tag2")
 library(rmarkdown)
 library(ggplot2)
 library(tidyverse)
@@ -44,14 +44,14 @@ for (sample_name in names(samples)) {
   cat(paste("  Replicate:", sample$rep, "\n\n"))
   # append histName to histList
   histList = c(histList, sample$histName)
-  samplename <- paste0(sample$histName, "_rep", as.character(sample$rep))
+  samplename <- paste0(sample$histName, "Rep", as.character(sample$rep))
   sampleList = c(sampleList, samplename)
   fragLen = read.table(paste0(projPath, "/alignment/sam/fragmentLen/", samplename,"_fragmentLen.txt"), header = FALSE) %>% 
   mutate(fragLen = V1 %>% as.numeric, fragCount = V2 %>% as.numeric, Weight = as.numeric(V2)/sum(as.numeric(V2)), Histone = sample$histName, 
   Replicate = sample$rep, sampleInfo = samplename) %>% rbind(fragLen, .) 
 }
 fragLen$sampleInfo = factor(fragLen$sampleInfo, levels = sampleList)
-fragLen$Histone = factor(fragLen$Histone, levels = histList)
+#fragLen$Histone = factor(fragLen$Histone, levels = histList)
 
 ## Generate the fragment size density plot (violin plot)
 figA = fragLen %>% ggplot(aes(x = sampleInfo, y = fragLen, weight = Weight, fill = Histone)) +
@@ -72,7 +72,7 @@ figB = fragLen %>% ggplot(aes(x = fragLen, y = fragCount, color = Histone, group
   ylab("Count") +
   coord_cartesian(xlim = c(0, 500))
 
-pdf(file= paste0(projPath, "/alignment/sam/fragmentLen/fragment_length.pdf"), width=10, height=7)
+pdf(file= paste0(projPath, "/alignment/sam/fragmentLen/fragment_length.pdf"), width=11, height=6)
 ggarrange(figA, figB, ncol = 2)
 dev.off()
 
