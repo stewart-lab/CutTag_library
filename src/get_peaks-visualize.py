@@ -37,7 +37,7 @@ def main():
         rep = sample["histName"]+"Rep"+str(sample["rep"])
         sampleList.append(rep)
     print(sampleList)
-    # # run alignment_summary.r for alignment visualization
+    # run alignment_summary.r for alignment visualization
     print("Running alignment_summary.r")
     ralignsumcmd = ("Rscript --vanilla " + script_dir+"/alignment_summary.r " + bowtie2_dir + " " + out_dir)
     addl_logfile.write("\n\nR align cmd: " + ralignsumcmd + "\n")
@@ -194,14 +194,15 @@ def main():
                 addl_logfile.write("RC:" + str(result.returncode) + "\nOUT:" + result.stdout + "\nERR:" + result.stderr)
     else:
         print("Spike-in calibration skipped, normalize to genome")
-        Normcmd = ("bedtools genomecov -bg -i " + bowtie2_dir + "/alignment/bed/" + sample + "_bowtie2.fragments.bed -g " + 
+        for sample in sampleList:
+            Normcmd = ("bedtools genomecov -bg -i " + bowtie2_dir + "/alignment/bed/" + sample + "_bowtie2.fragments.bed -g " + 
                    config["chromSize"] + " > " + bowtie2_dir + "/alignment/bedgraph/" + sample + 
                    "_bowtie2.fragments.normalized.bedgraph")
-        addl_logfile.write("\n\nspike-in normalization cmd: " + Normcmd + "\n")
-        result = run(Normcmd, check=True, capture_output=True, text=True, shell=True)
-        if (result.returncode):
-            print("RC:", result.returncode, "\nOUT:", result.stdout, "\nERR:", result.stderr)
-        addl_logfile.write("RC:" + str(result.returncode) + "\nOUT:" + result.stdout + "\nERR:" + result.stderr)
+            addl_logfile.write("\n\nspike-in normalization cmd: " + Normcmd + "\n")
+            result = run(Normcmd, check=True, capture_output=True, text=True, shell=True)
+            if (result.returncode):
+                print("RC:", result.returncode, "\nOUT:", result.stdout, "\nERR:", result.stderr)
+            addl_logfile.write("RC:" + str(result.returncode) + "\nOUT:" + result.stdout + "\nERR:" + result.stderr)
 
     print("running scale.r")
     rscalecmd = ("Rscript --vanilla " + script_dir + "/scale.r " + bowtie2_dir + " " + out_dir)
@@ -299,7 +300,7 @@ def main():
     for sample in sampleList:
         computeMatrixcmd = ("computeMatrix scale-regions -S " + bowtie2_dir + "/alignment/bigwig/" + sample + "_norm.smooth.bw " +
                             "-R " + gtfFile  +
-                            " --beforeRegionStartLength 5000 --regionBodyLength 5000 --afterRegionStartLength 10000 --skipZeros " +
+                            " --beforeRegionStartLength 5000 --regionBodyLength 5000 --afterRegionStartLength 5000 --skipZeros " +
                             "-o " + bowtie2_dir + "/peakCalling/SEACR/" + sample + "_gene_cpm_smooth10k.mat.gz " +
                             "-p " + str(cores))
         addl_logfile.write("\n\ncomputeMatrix cmd: " + computeMatrixcmd + "\n")
@@ -311,6 +312,7 @@ def main():
     # plot heatmap
     print("Plotting heatmap")
     stat = "mean"
+    # on both marks
     # plotHeatmapcmd = ("plotHeatmap -m " + bowtie2_dir + "/peakCalling/SEACR/" + histList[0] + "-" + histList[1] + "_gene_cpm_smooth10k.mat.gz " +
     #                   "-o " + bowtie2_dir + "/peakCalling/SEACR/AmexT_v47-AmexG_v6.0-DD_" + histList[0] + "-" + histList[1] + "_gene_cpm-smooth10k.pdf " +
     #                   "--averageTypeSummaryPlot " + stat + " --sortUsing sum --heatmapHeight 16 --heatmapWidth 8 --outFileSortedRegions " +

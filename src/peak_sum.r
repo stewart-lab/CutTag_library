@@ -1,6 +1,7 @@
 # load libraries
 library(reticulate)
-use_condaenv("/w5home/bmoore/miniconda3/envs/cut_tag2")
+use_condaenv("/w5home/bmoore/miniconda3/envs/cut_tag3")
+.libPaths(c("/w5home/bmoore/miniconda3/envs/cut_tag3/lib/R/library", .libPaths()))
 library(rmarkdown)
 library(ggplot2)
 library(tidyverse)
@@ -10,13 +11,14 @@ library(ggpubr)
 library(corrplot)
 library(GenomicRanges)
 library(chromVAR)
-
 # get arguments
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
 projPath = args[1]
 outDir = args[2]
+
+
 
 # set working directory
 setwd(projPath)
@@ -25,7 +27,7 @@ setwd(projPath)
 config = jsonlite::fromJSON(paste0(projPath, "/config.json"), simplifyDataFrame = FALSE)
 
 # read in alignment result
-alignResult= read.table(paste0(projPath, "/alignment/alignment_summary.txt"), header = TRUE, fill = TRUE)
+alignResult= read.table(paste0(projPath, "/alignment/alignment_summary_Vip-Zen.txt"), header = TRUE, fill = TRUE)
 
 # Extract keys that start with "SAMPLE"
 sample_keys <- names(config)[grepl("^SAMPLE", names(config))]
@@ -63,7 +65,7 @@ for(type in peakType){
   for (sample_name in names(samples)) {
     sample <- samples[[sample_name]]
     # get sample name
-    samplename <- paste0(sample$histName, "_rep", as.character(sample$rep))
+    samplename <- paste0(sample$histName, "Rep", as.character(sample$rep))
     overlap.gr = GRanges()
       peakInfo = read.table(paste0(projPath, "/peakCalling/SEACR/", samplename,"_seacr_", type, ".peaks.stringent.bed"), header = FALSE, fill = TRUE)
       peakInfo.gr = GRanges(peakInfo$V1, IRanges(start = peakInfo$V2, end = peakInfo$V3), strand = "*")
