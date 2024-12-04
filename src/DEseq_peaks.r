@@ -47,7 +47,7 @@ for (sample_name in names(samples)) {
   # get sample name
   samplename <- paste0(sample$histName, "Rep", as.character(sample$rep))
   sampleList = c(sampleList, samplename)
-    peakRes = read.table(paste0(projPath, "/peakCalling/SEACR/IgG/", samplename, "_seacr_top0.01.peaks.stringent.bed"), header = FALSE, fill = TRUE)
+    peakRes = read.table(paste0(projPath, "/peakCalling/SEACR/S2/", samplename, "_seacr_top0.01.peaks.stringent.bed"), header = FALSE, fill = TRUE)
     mPeak = GRanges(seqnames = peakRes$V1, IRanges(start = peakRes$V2, end = peakRes$V3), strand = "*") %>% append(mPeak, .)
   }
 masterPeak = reduce(mPeak)
@@ -89,7 +89,16 @@ DDS = DESeq(dds)
 normDDS = counts(DDS, normalized = TRUE) 
 colnames(normDDS) = paste0(colnames(normDDS), "_norm")
 res = results(DDS, independentFiltering = FALSE, altHypothesis = "greaterAbs")
-countMatDiff = cbind(masterPeak, dataS, normDDS, res)
+masterPeak <- as.data.frame(masterPeak)
+masterPeakS <- masterPeak[selectR,]
+countMatDiff = cbind(masterPeakS, dataS, normDDS, res)
+
 # write out
 write.csv(countMatDiff, paste0(projPath, "/", subDir,"/",histL[1],"vs.",histL[2],".csv"))
+# make bedgraph file
+bedgraphdf <- subset(countMatDiff, select=c(seqnames,start,end,log2FoldChange))
+bedgraphdf$log2FoldChange <- as.numeric(bedgraphdf$log2FoldChange)
+write.table(bedgraphdf, paste0(projPath, "/", subDir,"/",histL[1],"vs.",histL[2],".bedgraph"),
+            row.names = FALSE, sep="\t", quote = FALSE, col.names = FALSE)
+# write out packages
 writeLines(capture.output(sessionInfo()), con = paste0(projPath, "/", subDir,"/DESeq2_sessionInfo.txt"))
