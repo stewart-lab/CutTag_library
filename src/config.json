@@ -74,6 +74,78 @@
         "histName": "CtrlS2",
         "rep": 3
     },
+    "SAMPLE_13": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed.fastq.gz",
+        "histName": "VipIgG",
+        "rep": 1
+    },
+    "SAMPLE_14": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz",
+        "histName": "VipIgG",
+        "rep": 2
+    },
+    "SAMPLE_15": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz",
+        "histName": "VipIgG",
+        "rep": 3
+    },
+    "SAMPLE_16": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed.fastq.gz",
+        "histName": "ZenIgG",
+        "rep": 1
+    },
+    "SAMPLE_17": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz",
+        "histName": "ZenIgG",
+        "rep": 2
+    },
+    "SAMPLE_18": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz",
+        "histName": "ZenIgG",
+        "rep": 3
+    },
+    "SAMPLE_19": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed.fastq.gz",
+        "histName": "VipS2",
+        "rep": 1
+    },
+    "SAMPLE_20": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz",
+        "histName": "VipS2",
+        "rep": 2
+    },
+    "SAMPLE_21": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz",
+        "histName": "VipS2",
+        "rep": 3
+    },
+    "SAMPLE_22": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K27me3_1_S26_L005_R2_001_trimmed.fastq.gz",
+        "histName": "ZenS2",
+        "rep": 1
+    },
+    "SAMPLE_23": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz",
+        "histName": "ZenS2",
+        "rep": 2
+    },
+    "SAMPLE_24": {
+        "fastq_PE1": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R1_001_trimmed.fastq.gz",
+        "fastq_PE2": "fastqs/240226_EO_Ax1_K36me3_1_S27_L005_R2_001_trimmed.fastq.gz",
+        "histName": "ZenS2",
+        "rep": 3
+    },
     "runfastp": "false",
     "ref": "/w5home/bmoore/human_genome_38/ bowtie_genome_index/hg38",
     "spikeInRef": "/ASM584v2_ecoli_ncbi_dataset/data/GCF_000005845.2/bowtie2Index/Ecoli",
