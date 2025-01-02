@@ -27,7 +27,7 @@ setwd(projPath)
 config = jsonlite::fromJSON(paste0(projPath, "/config.json"), simplifyDataFrame = FALSE)
 
 # read in alignment result
-alignResult= read.table(paste0(projPath, "/alignment/alignment_summary_Vip-Zen.txt"), header = TRUE, fill = TRUE)
+alignResult= read.table(paste0(projPath, "/alignment/alignment_summary_Combo-Ctrl.txt"), header = TRUE, fill = TRUE)
 
 # Extract keys that start with "SAMPLE"
 sample_keys <- names(config)[grepl("^SAMPLE", names(config))]

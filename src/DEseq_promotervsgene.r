@@ -12,6 +12,7 @@ library(corrplot)
 library(GenomicRanges)
 library(chromVAR)
 library(DESeq2)
+library(Repitools)
 
 # get arguments
 #!/usr/bin/env Rscript
@@ -19,7 +20,7 @@ library(DESeq2)
 #projPath = args[1]
 subDir <- "DESeq2_out"
 # for testing
-projPath <- "/w5home/bmoore/kratz_cut_tag/"
+projPath <- "/w5home/bmoore/cut_and_tag/kratz_cut_tag/"
 
 # set working directory
 setwd(projPath)
@@ -36,9 +37,9 @@ samples <- lapply(sample_keys, function(key) config[[key]])
 names(samples) <- sample_keys
 
 # get bed files for genes and promoter
-gene_bedfile <- "/w5home/bmoore/genomes/human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.bed"
+gene_bedfile <- "/w5home/bmoore/genomes/human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.bed_300bpTSS.bed"
 genebed = read.table(gene_bedfile, header = FALSE, fill = TRUE)
-promoter_bedfile <- "/w5home/bmoore/genomes/human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.1kb.promoters.bed"
+promoter_bedfile <- "/w5home/bmoore/genomes/human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.400bp.promoters.bed"
 promoterbed = read.table(promoter_bedfile, header = FALSE, fill = TRUE)
 
 # read into Granges

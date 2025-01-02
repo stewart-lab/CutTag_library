@@ -9,5 +9,7 @@ export PATH=~/bin:$PATH
 awk '$3 == "gene"' human_genome_38/Homo_sapiens.GRCh38.108.filtered.gtf > human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.gtf 
 # convert gtf to bed using bedops
 convert2bed -i gtf --attribute-key="gene_name" < human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.gtf > human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.bed
-# get flanking region for 1000 bp upstream gene
-bedtools flank -i Homo_sapiens.GRCh38.108.filtered_genes.bed -g chromSize_humanGR38.txt -l 1000 -r 0 -s > Homo_sapiens.GRCh38.108.filtered_genes.1kb.promoters.bed
+# get 300bp past TSS
+python parse_gene_bed.py /w5home/bmoore/genomes/human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.bed
+# get flanking region for 400 bp upstream gene
+bedtools flank -i /w5home/bmoore/genomes/human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.bed_300bpTSS.bed -g /w5home/bmoore/genomes/human_genome_38/chromSize_humanGR38.txt -l 400 -r 0 -s > /w5home/bmoore/genomes/human_genome_38/Homo_sapiens.GRCh38.108.filtered_genes.400bp.promoters.bed

@@ -16,10 +16,10 @@ library(DESeq2)
 # get arguments
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
-projPath = args[1]
+#projPath = args[1]
 subDir <- "DESeq2_out"
 # for testing
-# projPath <- "/w5home/bmoore/kratz_cut_tag/"
+projPath <- "/w5home/bmoore/cut_and_tag/kratz_cut_tag"
 
 # set working directory
 setwd(projPath)
@@ -47,7 +47,7 @@ for (sample_name in names(samples)) {
   # get sample name
   samplename <- paste0(sample$histName, "Rep", as.character(sample$rep))
   sampleList = c(sampleList, samplename)
-    peakRes = read.table(paste0(projPath, "/peakCalling/SEACR/S2/", samplename, "_seacr_top0.01.peaks.stringent.bed"), header = FALSE, fill = TRUE)
+    peakRes = read.table(paste0(projPath, "/peakCalling/SEACR/", samplename, "_seacr_control.peaks.stringent.bed"), header = FALSE, fill = TRUE)
     mPeak = GRanges(seqnames = peakRes$V1, IRanges(start = peakRes$V2, end = peakRes$V3), strand = "*") %>% append(mPeak, .)
   }
 masterPeak = reduce(mPeak)
@@ -84,6 +84,7 @@ dataS = countMat[selectR,]
 dds = DESeqDataSetFromMatrix(countData = dataS,
                               colData = condition_df,
                               design = ~ condition)
+                              print(dds)
 DDS = DESeq(dds)
 # normalize with respect to seq depth
 normDDS = counts(DDS, normalized = TRUE) 
